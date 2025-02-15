@@ -22,6 +22,16 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids = [aws_security_group.sg.id]
 
   tags = {
-    Name = "example-ec2"
+    Name = var.ec2-name
   }
+}
+
+resource "null_resource" "run_script" {
+  triggers = aws_instance.ec2
+
+  provisioner "local-exec" {
+    command = "echo 'EC2 has been created/updated successfully!'"
+  }
+
+  depends_on = [aws_instance.ec2]
 }

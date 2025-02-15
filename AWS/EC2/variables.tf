@@ -17,3 +17,9 @@ variable "ec2-instance-type" {
     error_message = "Variable 'ec2-instance-type' must end with '.micro'."
   }
 }
+
+variable "ec2-name" {
+  type        = string
+  description = "EC2 Instance Name"
+  default     = "my-new-machine"
+}
