@@ -1,0 +1,44 @@
+# Copy this file to terraform.tfvars and edit as needed
+aws_region       = "eu-west-1"
+environment      = "dev"
+
+# IAM Users
+iam_user_names   = [
+  "terraform-admin", 
+  "terraform-developer", 
+  "terraform-readonly"
+]
+iam_user_path    = "/"
+create_access_keys = false  # Set to true if you want to create access keys
+
+# IAM Groups
+iam_group_names  = [
+  "Administrators", 
+  "Developers", 
+  "ReadOnly"
+]
+iam_group_path   = "/"
+
+# Group Memberships
+user_group_memberships = [
+  {
+    user  = "terraform-admin"
+    group = "Administrators"
+  },
+  {
+    user  = "terraform-developer"
+    group = "Developers"
+  },
+  {
+    user  = "terraform-readonly"
+    group = "ReadOnly"
+  }
+]
+
+# Custom Policies
+custom_policy_attachments = ["Developers", "ReadOnly"]
+create_custom_policy = true  # Set to false to skip creating the custom policy
+
+# Cross Account Role
+create_cross_account_role = false
+# trusted_account_id = "123456789012"  # Uncomment and replace with a real account ID 

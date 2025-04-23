@@ -30,7 +30,7 @@ variable "subnet_cidr" {
 variable "location" {
   description = "Region/location for the cloud resources"
   type        = string
-  default     = "us-east-1"
+  default     = "eu-west-1"
 }
 
 variable "resource_group_name" {

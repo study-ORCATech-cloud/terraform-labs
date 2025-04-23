@@ -1,23 +1,28 @@
-# LAB06: Monitor Logs and Metrics with CloudWatch and Terraform
+# LAB06: Advanced AWS CloudWatch Monitoring and Alerting with Terraform
 
 ## 📝 Lab Overview
 
-In this lab, you'll use **Terraform** to configure **Amazon CloudWatch Logs**, **metrics**, and **alarms**. You'll create log groups, push data, and set alarms for automatic monitoring of system performance.
+In this comprehensive lab, you'll use **Terraform** to deploy a complete CloudWatch monitoring solution. You'll set up an EC2 instance with the CloudWatch agent, create log groups, configure metric filters, set up alarms, and build a custom dashboard to visualize all your monitoring data.
 
 ---
 
 ## 🎯 Objectives
 
+- Deploy infrastructure with built-in monitoring capabilities
+- Configure the CloudWatch agent for custom metrics collection
 - Create CloudWatch log groups and metric filters
-- Configure alarms on EC2 CPU or memory usage
-- Test alarm conditions and trigger notifications
+- Set up alarms for different metrics (CPU, memory, disk)
+- Create a CloudWatch dashboard for visualization
+- Test alarm conditions and observe notifications
 
 ---
 
 ## 🧰 Prerequisites
 
-- EC2 instance (standalone or part of ASG from LAB05)
+- AWS account with appropriate permissions
 - Terraform v1.3+ installed
+- AWS CLI configured with access credentials
+- SSH key pair (if you want to connect to the EC2 instance)
 
 ---
 
@@ -25,67 +30,156 @@ In this lab, you'll use **Terraform** to configure **Amazon CloudWatch Logs**, *
 
 ```bash
 AWS/LAB06-CLOUDWATCH/
-├── main.tf               # CloudWatch logs, metrics, alarms
-├── variables.tf          # Log group names, instance IDs, etc.
-├── outputs.tf            # Alarm names, log stream names
-├── terraform.tfvars      # Optional variable overrides
-└── README.md             # This file
+├── main.tf               # Primary Terraform configuration
+├── variables.tf          # Variable definitions
+├── outputs.tf            # Output values
+├── terraform.tfvars      # Variable values
+└── README.md             # This documentation
 ```
 
 ---
 
 ## 🚀 Steps to Complete the Lab
 
+### 1. Prepare Your Environment
+
+1. **Review the terraform.tfvars file**
+   - Set your preferred region (default: eu-west-1)
+   - Configure your SSH key pair name
+   - Optionally add your email address to receive alarm notifications
+
+### 2. Deploy Resources
+
 1. **Initialize Terraform**
    ```bash
    terraform init
    ```
 
-2. **Run plan and apply**
+2. **Preview the deployment plan**
    ```bash
    terraform plan
+   ```
+
+3. **Apply the configuration**
+   ```bash
    terraform apply
    ```
 
-3. **Test alarms** by simulating load on EC2 (e.g., stress test)
+4. **Note the outputs**
+   - EC2 instance public IP
+   - CloudWatch dashboard URL
+   - Log group names
+
+### 3. Explore the CloudWatch Console
+
+1. **Navigate to CloudWatch in the AWS Console**
+2. **Explore log groups**
+   - Web server access logs
+   - Web server error logs
+   - System logs
+3. **Check your dashboard**
+   - View the custom dashboard with metrics and logs
+
+### 4. Test the CloudWatch Alarms
+
+1. **Generate CPU load**
+   - SSH into your EC2 instance:
+     ```bash
+     ssh -i your-key.pem ec2-user@<instance-public-ip>
+     ```
+   - Run a stress test to trigger CPU alarm:
+     ```bash
+     sudo stress --cpu 2 --timeout 300
+     ```
+
+2. **Generate HTTP errors**
+   - SSH into your EC2 instance
+   - Make curl requests to non-existent pages:
+     ```bash
+     for i in {1..10}; do curl http://localhost/nonexistent-page-$i; done
+     ```
+
+3. **Observe alarm state changes**
+   - In the AWS Console, go to CloudWatch > Alarms
+   - Watch the alarm status change from "OK" to "ALARM"
+   - If you configured email notifications, check your inbox
+
+---
+
+## 🔍 Key Components
+
+### CloudWatch Agent
+
+The lab deploys an EC2 instance with the CloudWatch agent configured to collect:
+
+- **System metrics**: CPU, memory, disk usage
+- **Log files**: Apache access and error logs, system messages
+
+### Log Groups and Metric Filters
+
+Three log groups are created:
+- `/aws/ec2/web/access` - Apache access logs
+- `/aws/ec2/web/error` - Apache error logs
+- `/aws/ec2/system` - System logs
+
+Metric filters extract metrics from logs, including:
+- HTTP 404 errors
+- HTTP 5xx errors
+
+### Alarms
+
+The lab sets up CloudWatch alarms for:
+- High CPU utilization (> 80%)
+- High memory usage (> 80%)
+- High disk usage (> 80%)
+- HTTP error rate (> 5 errors per minute)
+
+### Dashboard
+
+A comprehensive dashboard displays:
+- CPU, memory, and disk metrics
+- HTTP error counts
+- Latest web access logs
 
 ---
 
 ## 🧼 Cleanup
 
+When you're finished with the lab, you should destroy all created resources to avoid unexpected AWS charges.
+
 ```bash
 terraform destroy
 ```
-To remove log groups and alarms
+
+This will remove all CloudWatch log groups, metric filters, alarms, dashboards, and the EC2 instance created during this lab.
 
 ---
 
-## 💡 Key Concepts
+## 💡 Extension Activities
 
-- **Log Group**: Container for logs pushed by EC2 or other services
-- **Metric Filter**: Turns logs into quantifiable metrics
-- **Alarm**: Watch a metric and send alerts on thresholds
-- **SNS**: Can be integrated to send emails or SMS
-
----
-
-## 🧪 Optional Challenges
-
-- Create dashboard with widgets (CPU, memory, logs)
-- Use CloudWatch agent to push logs
-- Set custom alarm on disk space or network
+- Add more metric filters for specific log patterns
+- Configure composite alarms that combine multiple conditions
+- Create a Lambda function that triggers when an alarm fires
+- Add anomaly detection to your metrics
+- Configure AWS Logs Insights queries for your dashboard
 
 ---
 
 ## 📚 References
 
-- [Terraform CloudWatch Docs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group)
-- [AWS CloudWatch Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/)
+- [CloudWatch Agent Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html)
+- [CloudWatch Metrics Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html)
+- [CloudWatch Logs Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
 ---
 
-## ✅ Summary
+## ✅ Key Takeaways
 
-You've implemented automated observability using CloudWatch and Terraform — critical for proactive infrastructure monitoring.
+After completing this lab, you'll understand how to:
 
-**Next up:** Launch a managed MySQL database using RDS in LAB07.
+- Implement comprehensive monitoring for AWS resources
+- Configure automated alerting for system and application issues
+- Collect and analyze logs and metrics using CloudWatch
+- Create dashboards for real-time visibility into your infrastructure
+- Automate the entire monitoring setup using Infrastructure as Code (Terraform)

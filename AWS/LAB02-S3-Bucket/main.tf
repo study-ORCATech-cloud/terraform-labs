@@ -1,81 +1,179 @@
-# AWS LAB01 - Basic Infrastructure
-
-# Configure AWS provider
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 }
 
-# Create a VPC
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
+# Create an S3 bucket with versioning enabled
+resource "aws_s3_bucket" "lab02_bucket" {
+  bucket = var.bucket_name
 
   tags = {
-    Name = "main-vpc"
-    Lab  = "AWS-LAB01"
+    Name        = var.bucket_name
+    Environment = var.environment
+    Lab         = "LAB02-S3-Bucket"
   }
 }
 
-# Create a subnet
-resource "aws_subnet" "public" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = var.subnet_cidr
+# Add versioning configuration
+resource "aws_s3_bucket_versioning" "lab02_bucket_versioning" {
+  bucket = aws_s3_bucket.lab02_bucket.id
 
-  tags = {
-    Name = "public-subnet"
-    Lab  = "AWS-LAB01"
+  versioning_configuration {
+    status = var.versioning_enabled ? "Enabled" : "Suspended"
   }
 }
 
-# Create a security group
-resource "aws_security_group" "web" {
-  name        = "web-sg"
-  description = "Allow web traffic"
-  vpc_id      = aws_vpc.main.id
+# Configure bucket ownership
+resource "aws_s3_bucket_ownership_controls" "lab02_bucket_ownership" {
+  bucket = aws_s3_bucket.lab02_bucket.id
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "web-sg"
-    Lab  = "AWS-LAB01"
+  rule {
+    object_ownership = "BucketOwnerPreferred"
   }
 }
 
-resource "aws_instance" "ec2" {
-  ami           = var.ec2-ami
-  instance_type = var.ec2-instance-type
+# Configure public access block settings
+resource "aws_s3_bucket_public_access_block" "lab02_public_access" {
+  bucket                  = aws_s3_bucket.lab02_bucket.id
+  block_public_acls       = !var.allow_public_access
+  block_public_policy     = !var.allow_public_access
+  ignore_public_acls      = !var.allow_public_access
+  restrict_public_buckets = !var.allow_public_access
+}
 
-  vpc_security_group_ids = [aws_security_group.web.id]
+# Configure ACLs (only applied when public access is allowed)
+resource "aws_s3_bucket_acl" "lab02_bucket_acl" {
+  depends_on = [
+    aws_s3_bucket_ownership_controls.lab02_bucket_ownership,
+    aws_s3_bucket_public_access_block.lab02_public_access,
+  ]
 
-  tags = {
-    Name = var.ec2-name
+  bucket = aws_s3_bucket.lab02_bucket.id
+  acl    = var.allow_public_access ? "public-read" : "private"
+}
+
+# Enable static website hosting if specified
+resource "aws_s3_bucket_website_configuration" "lab02_website" {
+  count  = var.enable_static_website ? 1 : 0
+  bucket = aws_s3_bucket.lab02_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
   }
 }
 
-resource "null_resource" "run_script" {
-  triggers = aws_instance.ec2
+# Add bucket policy for public access when website hosting is enabled
+resource "aws_s3_bucket_policy" "lab02_bucket_policy" {
+  count  = var.enable_static_website && var.allow_public_access ? 1 : 0
+  bucket = aws_s3_bucket.lab02_bucket.id
 
-  provisioner "local-exec" {
-    command = "echo 'EC2 has been created/updated successfully!'"
-  }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.lab02_bucket.arn}/*"
+      },
+    ]
+  })
 
-  depends_on = [aws_instance.ec2]
+  depends_on = [
+    aws_s3_bucket_public_access_block.lab02_public_access
+  ]
+}
+
+# Optionally upload example files for website hosting
+resource "aws_s3_object" "lab02_index_html" {
+  count        = var.enable_static_website ? 1 : 0
+  bucket       = aws_s3_bucket.lab02_bucket.id
+  key          = "index.html"
+  content      = <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Terraform S3 Lab Website</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #0066cc;
+        }
+        .success {
+            padding: 20px;
+            background-color: #e6f7ff;
+            border-left: 5px solid #0066cc;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="success">
+        <h1>Success! Your S3 Website is Live</h1>
+        <p>This page was created through Terraform as part of LAB02-S3-Bucket.</p>
+    </div>
+    <h2>What You've Accomplished:</h2>
+    <ul>
+        <li>Created an S3 bucket with Terraform</li>
+        <li>Configured proper bucket settings</li>
+        <li>Enabled static website hosting</li>
+        <li>Uploaded this index.html file</li>
+    </ul>
+    <p>Timestamp: ${timestamp()}</p>
+</body>
+</html>
+EOF
+  content_type = "text/html"
+}
+
+resource "aws_s3_object" "lab02_error_html" {
+  count        = var.enable_static_website ? 1 : 0
+  bucket       = aws_s3_bucket.lab02_bucket.id
+  key          = "error.html"
+  content      = <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error - Terraform S3 Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #cc0000;
+        }
+        .error {
+            padding: 20px;
+            background-color: #ffebe6;
+            border-left: 5px solid #cc0000;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <h1>Error 404 - Page Not Found</h1>
+        <p>The requested file was not found in this S3 bucket.</p>
+    </div>
+    <p>Return to <a href="/index.html">home page</a>.</p>
+</body>
+</html>
+EOF
+  content_type = "text/html"
 }

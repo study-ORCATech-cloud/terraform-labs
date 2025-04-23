@@ -1,0 +1,42 @@
+# Copy this file to terraform.tfvars and edit as needed
+aws_region          = "eu-west-1"
+environment         = "dev"
+name_prefix         = "lab04"
+
+# VPC Configuration
+vpc_cidr            = "10.0.0.0/16"
+
+# Subnet Configuration
+availability_zones  = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+database_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+
+# Optional Features
+create_nat_gateway = true   # Set to false to avoid NAT Gateway costs
+create_s3_endpoint = false  # Set to true to enable S3 VPC endpoint
+enable_vpc_flow_logs = false  # Set to true to enable VPC flow logs
+
+# NACL Rules - Advanced Configuration
+# Uncomment and modify to override defaults
+# public_inbound_acl_rules = [
+#   {
+#     rule_number = 100
+#     rule_action = "allow"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_block  = "0.0.0.0/0"
+#   }
+# ]
+# 
+# public_outbound_acl_rules = [
+#   {
+#     rule_number = 100
+#     rule_action = "allow"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_block  = "0.0.0.0/0"
+#   }
+# ] 

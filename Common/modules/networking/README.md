@@ -19,7 +19,7 @@ module "network" {
   network_name       = "my-network"
   cidr_block         = "10.0.0.0/16"
   subnet_cidr        = "10.0.1.0/24"
-  location           = "us-east-1"
+  location           = "eu-west-1"
   resource_group_name = "my-rg"  # Only required for Azure
   
   tags = {
@@ -37,7 +37,7 @@ module "network" {
 | network_name | Name for the network resources | string | "terraform-network" | no |
 | cidr_block | CIDR block for the network | string | "10.0.0.0/16" | no |
 | subnet_cidr | CIDR block for the subnet | string | "10.0.1.0/24" | no |
-| location | Region/location for the cloud resources | string | "us-east-1" | no |
+| location | Region/location for the cloud resources | string | "eu-west-1" | no |
 | resource_group_name | Name of the Azure resource group (only used for Azure) | string | "" | no |
 | tags | Tags to apply to all resources | map(string) | {} | no |
 
@@ -62,7 +62,7 @@ module "aws_network" {
   network_name  = "aws-lab-network"
   cidr_block    = "10.0.0.0/16"
   subnet_cidr   = "10.0.1.0/24"
-  location      = "us-east-1"
+  location      = "eu-west-1"
   
   tags = {
     Environment = "lab"

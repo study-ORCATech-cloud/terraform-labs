@@ -1,43 +1,35 @@
-variable "region" {
+variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
   default     = "eu-west-1"
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
+variable "environment" {
+  description = "Environment name for tagging resources"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "dev"
 }
 
-variable "subnet_cidr" {
-  description = "CIDR block for the subnet"
+variable "bucket_name" {
+  description = "Name of the S3 bucket (must be globally unique)"
   type        = string
-  default     = "10.0.1.0/24"
+  default     = null # Must be provided in terraform.tfvars
 }
 
-variable "ec2-ami" {
-  type        = string
-  description = "EC2 AMI"
-
-  validation {
-    condition     = startswith(var.ec2-ami, "ami-")
-    error_message = "Variable 'ec2-ami' must start with 'ami-'."
-  }
+variable "versioning_enabled" {
+  description = "Whether to enable versioning for the S3 bucket"
+  type        = bool
+  default     = true
 }
 
-variable "ec2-instance-type" {
-  type        = string
-  description = "EC2 Instance Type, currently only allowed 'micro' machines"
-
-  validation {
-    condition     = endswith(var.ec2-instance-type, "micro")
-    error_message = "Variable 'ec2-instance-type' must end with '.micro'."
-  }
+variable "allow_public_access" {
+  description = "Whether to allow public access to the S3 bucket"
+  type        = bool
+  default     = false
 }
 
-variable "ec2-name" {
-  type        = string
-  description = "EC2 Instance Name"
-  default     = "my-new-machine"
+variable "enable_static_website" {
+  description = "Whether to enable static website hosting for the S3 bucket"
+  type        = bool
+  default     = false
 }
