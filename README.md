@@ -1,76 +1,121 @@
 # Terraform Labs Repository
 
-A comprehensive collection of hands-on Terraform labs for learning Infrastructure as Code (IaC) across multiple cloud platforms including AWS, Azure, and GCP.
+A hands-on, code-first collection of cloud infrastructure labs built with **Terraform** — enabling you to automate the provisioning of real-world resources across **AWS**, **Azure**, and **GCP**.
 
-## Repository Overview
+This repository is the Terraform-based counterpart to our [UI & CLI Cloud Labs](https://github.com/study-ORCATech-cloud/cloud-labs), offering a practical way to transition from manual tasks to Infrastructure as Code (IaC).
 
-This repository contains structured labs designed to help you learn Terraform through practical, hands-on exercises. Each cloud provider has its own directory with labs progressing from basic to advanced concepts.
+---
 
-## Repository Structure
+## 📦 About This Repository
 
-```
+These labs are designed for learners who want to:
+- Understand **how Terraform automates cloud provisioning**
+- Translate manual tasks into **declarative, reusable code**
+- Build **modular and scalable** cloud infrastructure
+
+Labs match the use cases of the Cloud Labs UI/CLI track but are fully implemented using Terraform.
+
+---
+
+## 📁 Repository Structure
+
+```bash
 terraform-labs/
 │
-├── AWS/              # AWS-focused Terraform labs
-│   ├── LAB01/       # Basic AWS resources
-│   ├── LAB02/       # (Coming soon)
+├── AWS/                        # AWS Terraform labs
+│   ├── LAB01-EC2-Instance/
+│   ├── LAB02-S3-Bucket/
 │   └── ...
 │
-├── Azure/           # Azure-focused Terraform labs
-│   ├── LAB01/       # (Coming soon)
+├── Azure/                      # Azure Terraform labs
+│   ├── LAB01-Virtual-Machine/
+│   ├── LAB02-Storage-Account/
 │   └── ...
 │
-├── GCP/             # Google Cloud Platform labs
-│   ├── LAB01/       # (Coming soon)
+├── GCP/                        # GCP Terraform labs
+│   ├── LAB01-Compute-Engine/
+│   ├── LAB02-Cloud-Storage/
 │   └── ...
 │
-└── Common/          # Common modules and configurations
-    └── ...
+└── Common/                     # Shared modules or documentation
+    └── Provider-Setup.md       # Setup instructions for each cloud
 ```
 
-## Getting Started
+Each lab folder includes:
+- `main.tf`, `variables.tf`, `outputs.tf`
+- `README.md` with purpose, instructions, and cleanup
+- Optional: `terraform.tfvars.example`
 
-### Prerequisites
+---
 
-To use these labs, you'll need:
+## 🧰 Prerequisites
 
-- [Terraform](https://www.terraform.io/downloads.html) installed (v1.0.0 or newer recommended)
-- Accounts for the cloud providers you want to work with
-- Cloud provider CLI tools installed and configured:
-  - AWS: [AWS CLI](https://aws.amazon.com/cli/)
-  - Azure: [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-  - GCP: [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+To complete these labs, you’ll need:
+- Terraform (v1.3+ recommended): [Install Terraform](https://developer.hashicorp.com/terraform/downloads)
+- A cloud account for AWS, Azure, or GCP
+- Credentials configured in your shell (or use `terraform.tfvars`)
 
-### How to Use These Labs
+---
 
-1. Clone this repository to your local machine
-2. Navigate to the specific lab directory you're interested in
-3. Follow the instructions in each lab's README.md file
-4. Execute the terraform commands as directed in the lab instructions
+## 🚀 How to Use These Labs
 
-Each lab contains:
-- Terraform configuration files (*.tf)
-- README.md with step-by-step instructions
-- Optional challenge exercises to enhance your learning
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/<your-org>/terraform-labs.git
+   cd terraform-labs
+   ```
+2. Navigate to a lab folder (e.g., `AWS/LAB01-EC2-Instance/`)
+3. Initialize Terraform:
+   ```bash
+   terraform init
+   ```
+4. Preview and apply the configuration:
+   ```bash
+   terraform plan
+   terraform apply
+   ```
+5. Follow the included `README.md` for full steps, validation, and cleanup.
 
-## Learning Path
+---
 
-The labs within each cloud provider directory follow a natural progression:
+## 📈 Learning Progression
 
-1. **Fundamentals**: Basic resource creation, variables, outputs
-2. **Intermediate**: Modules, state management, complex resources
-3. **Advanced**: Remote state, workspaces, CI/CD integration
+Labs are designed to build IaC skills incrementally:
 
-## Contributing
+- **Beginner**: Launch compute instances, configure basic storage
+- **Intermediate**: Networking, IAM, monitoring, scalable systems
+- **Advanced**: Serverless, multi-region, Kubernetes, automation
 
-Contributions to this repository are welcome! If you'd like to add new labs or improve existing ones, please follow the standard GitHub workflow:
+---
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+## 🌐 Lab Roadmap
 
-## Acknowledgments
+Check the [Terraform Labs Roadmap](./ROADMAP.md) for a full list of completed and upcoming labs for each cloud provider.
 
-- Terraform documentation and community
-- Cloud provider documentation and examples
+---
+
+## 🤝 Contributing
+
+We welcome Terraform modules, lab additions, bug fixes, and documentation updates:
+
+1. Fork the repo
+2. Create a branch (`feature/lab-new-topic`)
+3. Add the lab under the correct cloud provider
+4. Submit a pull request with a clear explanation
+
+---
+
+## 🙏 Acknowledgments
+
+- Terraform by HashiCorp
+- AWS, Azure, and GCP official provider plugins
+- Community contributors and DevOps engineers
+
+---
+
+## 🌟 Automate with Confidence
+
+Master cloud provisioning the modern way. These Terraform labs will help you write infrastructure that is **modular**, **versioned**, and **repeatable** — all while mirroring real-world cloud practices.
+
+Happy building! ☁️
+
