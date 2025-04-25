@@ -10,13 +10,14 @@ This lab demonstrates how infrastructure as code can simplify and standardize th
 
 ## 🎯 Learning Objectives
 
-- Create and manage IAM users using Terraform
-- Organize users into groups with appropriate permissions
-- Create and attach custom policies to control access
-- Configure service roles for EC2 instances
-- Implement cross-account access (optional)
-- Understand IAM best practices and security considerations
-- Apply proper cleanup procedures to remove IAM resources
+- Create and manage IAM users with appropriate configuration
+- Organize users into logical groups for permission management
+- Create custom IAM policies using JSON encoding and policy files
+- Attach AWS managed and custom policies to groups
+- Create IAM roles with trust relationships for EC2 instances
+- Configure instance profiles for EC2 service roles
+- Implement cross-account access through roles (optional)
+- Apply IAM security best practices in an infrastructure as code environment
 
 ---
 
@@ -80,7 +81,28 @@ AWS/LAB03-IAM/
 
    > ⚠️ **Important**: For security best practices, set `create_access_keys` to `false` unless you specifically need to create programmatic access keys.
 
-### Step 4: Review the Execution Plan
+### Step 4: Complete the TODO Sections
+
+This lab contains several TODO sections that you need to complete:
+
+1. In `main.tf`:
+   - Create IAM users using a for_each loop
+   - Create access keys for users (conditionally)
+   - Create IAM groups using a for_each loop
+   - Add users to groups using user_group_memberships variable
+   - Create custom policies for S3 and EC2 read-only access
+   - Create a custom policy from a JSON file (conditionally)
+   - Attach AWS managed policies to appropriate groups
+   - Attach custom policies to groups based on conditions
+   - Create an IAM role for EC2 instances with trust policy
+   - Create an instance profile for the EC2 role
+   - Create a cross-account role (conditionally)
+
+2. In `outputs.tf`:
+   - Define outputs for IAM users, groups, policies, and roles
+   - Define conditional outputs for access keys and cross-account role
+
+### Step 5: Review the Execution Plan
 
 1. Generate and review an execution plan:
    ```bash
@@ -88,13 +110,16 @@ AWS/LAB03-IAM/
    ```
 
 2. The plan will show the IAM resources to be created:
-   - IAM users (terraform-admin, terraform-developer, terraform-readonly)
-   - IAM groups (Administrators, Developers, ReadOnly)
-   - Group memberships and policy attachments
-   - Custom policies and IAM roles
-   - Instance profile for EC2
+   - IAM users with their configuration and tags
+   - IAM groups for organizing users
+   - User-group memberships for permission assignment
+   - Custom IAM policies with specific permissions
+   - Policy attachments to groups
+   - IAM roles with trust relationships
+   - Instance profile for EC2 service access
+   - Cross-account role (if enabled)
 
-### Step 5: Create the IAM Resources
+### Step 6: Apply the Configuration
 
 1. Apply the Terraform configuration:
    ```bash
@@ -108,9 +133,9 @@ AWS/LAB03-IAM/
    - Group ARNs and names
    - Policy ARNs
    - Role ARNs
-   - Access key IDs (if enabled)
+   - Access key IDs and secrets (if enabled)
 
-### Step 6: Explore the IAM Resources
+### Step 7: Explore the IAM Resources
 
 1. Verify the created users in the AWS Console or CLI:
    ```bash
@@ -135,6 +160,13 @@ AWS/LAB03-IAM/
    aws iam get-role --role-name EC2InstanceRole
    ```
 
+5. If you created access keys, securely store them or test them:
+   ```bash
+   # Use access keys to configure another AWS profile
+   aws configure --profile terraform-user
+   # Enter the access key ID and secret access key when prompted
+   ```
+
 ---
 
 ## 🔍 Understanding the Code
@@ -152,6 +184,7 @@ resource "aws_iam_user" "lab_users" {
   tags = {
     Environment = var.environment
     Lab         = "LAB03-IAM"
+    CreatedBy   = "Terraform"
   }
 }
 ```
@@ -201,7 +234,9 @@ resource "aws_iam_policy" "s3_read_only" {
         Action = [
           "s3:Get*",
           "s3:List*",
-          "s3:Describe*"
+          "s3:Describe*",
+          "s3-object-lambda:Get*",
+          "s3-object-lambda:List*"
         ]
         Resource = "*"
       }
@@ -211,6 +246,18 @@ resource "aws_iam_policy" "s3_read_only" {
 ```
 
 Defines IAM policies using inline JSON or by referencing external JSON files. In this example, we create a custom policy for S3 read-only access.
+
+### Policy Attachments
+
+```hcl
+resource "aws_iam_group_policy_attachment" "admin_policy" {
+  count      = contains(var.iam_group_names, "Administrators") ? 1 : 0
+  group      = "Administrators"
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+```
+
+Attaches policies to groups conditionally based on whether the group exists.
 
 ### Service Roles
 
@@ -231,10 +278,62 @@ resource "aws_iam_role" "ec2_role" {
       }
     ]
   })
+  
+  tags = {
+    Environment = var.environment
+    Lab         = "LAB03-IAM"
+    CreatedBy   = "Terraform"
+  }
 }
 ```
 
-Creates a role that can be assumed by EC2 instances, enabling instances to make API requests to AWS services securely.
+Creates a role that can be assumed by EC2 instances, enabling instances to make API requests to AWS services securely using temporary credentials rather than hardcoded access keys.
+
+### Instance Profiles
+
+```hcl
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "EC2InstanceProfile"
+  role = aws_iam_role.ec2_role.name
+}
+```
+
+Instance profiles are used to pass an IAM role to an EC2 instance. They serve as a container for an IAM role that can be used with EC2 instances.
+
+### Cross-Account Roles
+
+```hcl
+resource "aws_iam_role" "cross_account_role" {
+  count = var.create_cross_account_role ? 1 : 0
+  name  = "CrossAccountRole"
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.trusted_account_id != null ? var.trusted_account_id : data.aws_caller_identity.current.account_id
+        }
+        Condition = {
+          StringEquals = {
+            "aws:PrincipalTag/Environment" = var.environment
+          }
+        }
+      }
+    ]
+  })
+  
+  tags = {
+    Environment = var.environment
+    Lab         = "LAB03-IAM"
+    CreatedBy   = "Terraform"
+  }
+}
+```
+
+Creates a role that can be assumed by principals in another AWS account, which is useful for cross-account access management.
 
 ---
 
@@ -245,17 +344,21 @@ Creates a role that can be assumed by EC2 instances, enabling instances to make 
    - Apply least privilege principle by creating custom policies
    - Avoid creating access keys when not needed
    - Use roles for service access instead of embedding credentials
+   - Add conditions to limit when and where permissions are granted
 
 2. **Terraform Techniques**:
-   - Using `for_each` with sets and maps
-   - Conditional resource creation
-   - External policy files
-   - Managing resource dependencies
+   - Using `for_each` with sets and maps for multiple similar resources
+   - Creating complex conditional expressions for resource creation
+   - Using `jsonencode` function for inline policy documents
+   - Loading external policy files with the `file` function
+   - Using data sources to reference existing resources
 
 3. **Security Principles**:
    - Separation of duties through different IAM groups
    - Least privilege access through custom policies
    - Temporary credentials through IAM roles
+   - Fine-grained access control with conditions
+   - Secure management of programmatic access
 
 ---
 
@@ -278,10 +381,86 @@ Ready to learn more? Try these extensions:
    ```
 
 2. **Implement MFA Enforcement**:
-   Create a policy that denies access to sensitive actions unless MFA is present.
+   Create a policy that denies access to sensitive actions unless MFA is present:
+   ```hcl
+   resource "aws_iam_policy" "require_mfa" {
+     name        = "RequireMFA"
+     description = "Policy that denies access to sensitive actions unless MFA is enabled"
+     
+     policy = jsonencode({
+       Version = "2012-10-17"
+       Statement = [
+         {
+           Sid    = "DenyWithoutMFA"
+           Effect = "Deny"
+           Action = [
+             "iam:*",
+             "ec2:*",
+             "rds:*"
+           ]
+           Resource = "*"
+           Condition = {
+             BoolIfExists = {
+               "aws:MultiFactorAuthPresent" = "false"
+             }
+           }
+         }
+       ]
+     })
+   }
+   ```
 
-3. **Create a Boundary Policy**:
-   Implement permission boundaries to limit the maximum permissions for users.
+3. **Create a Permission Boundary**:
+   Implement permission boundaries to limit the maximum permissions for users:
+   ```hcl
+   resource "aws_iam_policy" "developer_boundary" {
+     name        = "DeveloperPermissionBoundary"
+     description = "Permission boundary for developers"
+     
+     policy = jsonencode({
+       Version = "2012-10-17"
+       Statement = [
+         {
+           Effect   = "Allow"
+           Action   = [
+             "s3:*",
+             "ec2:Describe*",
+             "cloudwatch:*",
+             "logs:*"
+           ]
+           Resource = "*"
+         },
+         {
+           Effect   = "Deny"
+           Action   = [
+             "iam:*",
+             "organizations:*"
+           ]
+           Resource = "*"
+         }
+       ]
+     })
+   }
+   
+   resource "aws_iam_user_policy_attachment" "boundary_attachment" {
+     for_each = {
+       for user in var.iam_user_names : user => user
+       if contains(["terraform-developer1", "terraform-developer2"], user)
+     }
+     
+     user       = aws_iam_user.lab_users[each.key].name
+     policy_arn = aws_iam_policy.developer_boundary.arn
+   }
+   ```
+
+4. **Implement Access Analyzer**:
+   Create an IAM Access Analyzer to identify resources shared with external entities:
+   ```hcl
+   resource "aws_accessanalyzer_analyzer" "organization_analyzer" {
+     analyzer_name = "organization-analyzer"
+     type          = "ORGANIZATION"
+   }
+   ```
 
 ---
 
@@ -359,6 +538,18 @@ To avoid potential security risks and keep your AWS account clean:
    ```
    **Solution**: The resource may have already been deleted; you can ignore this error or use `-refresh=false` with `terraform destroy`.
 
+4. **InvalidInput for policy attachments**:
+   ```
+   Error: InvalidInput: No such group: Developers
+   ```
+   **Solution**: Ensure the group is created before attempting to attach policies to it.
+
+5. **MalformedPolicyDocument for roles**:
+   ```
+   Error: MalformedPolicyDocument: The policy document must have a Version element
+   ```
+   **Solution**: Ensure your policy JSON includes `"Version": "2012-10-17"` and properly formatted statements.
+
 ---
 
 ## 📚 Additional Resources
@@ -367,6 +558,7 @@ To avoid potential security risks and keep your AWS account clean:
 - [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
 - [IAM Policy Simulator](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_testing-policies.html)
 - [IAM Access Analyzer](https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html)
+- [AWS Security Blog - IAM](https://aws.amazon.com/blogs/security/category/identity-access-management/)
 
 ---
 

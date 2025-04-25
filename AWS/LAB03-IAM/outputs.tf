@@ -1,68 +1,86 @@
-output "user_arns" {
-  description = "The ARNs of the created IAM users"
-  value       = { for name, user in aws_iam_user.lab_users : name => user.arn }
-}
+# TODO: Define an output for user_arns
+# Requirements:
+# - Name it "user_arns"
+# - Description should explain it returns the ARNs of created IAM users
+# - Value should be a map of user names to their ARNs
+# HINT: Use { for name, user in aws_iam_user.lab_users : name => user.arn }
 
-output "user_names" {
-  description = "The names of the created IAM users"
-  value       = [for user in aws_iam_user.lab_users : user.name]
-}
+# TODO: Define an output for user_names
+# Requirements:
+# - Name it "user_names"
+# - Description should explain it returns the names of created IAM users
+# - Value should be a list of user names
+# HINT: Use [for user in aws_iam_user.lab_users : user.name]
 
-output "group_arns" {
-  description = "The ARNs of the created IAM groups"
-  value       = { for name, group in aws_iam_group.lab_groups : name => group.arn }
-}
+# TODO: Define an output for group_arns
+# Requirements:
+# - Name it "group_arns"
+# - Description should explain it returns the ARNs of created IAM groups
+# - Value should be a map of group names to their ARNs
+# HINT: Use { for name, group in aws_iam_group.lab_groups : name => group.arn }
 
-output "group_names" {
-  description = "The names of the created IAM groups"
-  value       = [for group in aws_iam_group.lab_groups : group.name]
-}
+# TODO: Define an output for group_names
+# Requirements:
+# - Name it "group_names"
+# - Description should explain it returns the names of created IAM groups
+# - Value should be a list of group names
+# HINT: Use [for group in aws_iam_group.lab_groups : group.name]
 
-output "custom_policy_arns" {
-  description = "ARNs of custom policies"
-  value = {
-    "S3ReadOnly"   = aws_iam_policy.s3_read_only.arn,
-    "EC2ReadOnly"  = aws_iam_policy.ec2_read_only.arn,
-    "CustomPolicy" = var.create_custom_policy ? aws_iam_policy.custom_policy[0].arn : null
-  }
-}
+# TODO: Define an output for custom_policy_arns
+# Requirements:
+# - Name it "custom_policy_arns"
+# - Description should explain it returns ARNs of custom policies
+# - Value should be a map with keys for each policy and their ARNs as values
+# - Include conditional output for the custom_policy (with null if not created)
+# HINT: Use a map with S3ReadOnly, EC2ReadOnly, and CustomPolicy keys
 
-output "ec2_role_arn" {
-  description = "The ARN of the IAM role for EC2 instances"
-  value       = aws_iam_role.ec2_role.arn
-}
+# TODO: Define an output for ec2_role_arn
+# Requirements:
+# - Name it "ec2_role_arn"
+# - Description should explain it returns the ARN of the IAM role for EC2 instances
+# - Value should be the ARN of the EC2 role
+# HINT: Use aws_iam_role.ec2_role.arn
 
-output "ec2_instance_profile_name" {
-  description = "The name of the instance profile for EC2 instances"
-  value       = aws_iam_instance_profile.ec2_profile.name
-}
+# TODO: Define an output for ec2_instance_profile_name
+# Requirements:
+# - Name it "ec2_instance_profile_name"
+# - Description should explain it returns the name of the instance profile
+# - Value should be the name of the EC2 instance profile
+# HINT: Use aws_iam_instance_profile.ec2_profile.name
 
-output "ec2_instance_profile_arn" {
-  description = "The ARN of the instance profile for EC2 instances"
-  value       = aws_iam_instance_profile.ec2_profile.arn
-}
+# TODO: Define an output for ec2_instance_profile_arn
+# Requirements:
+# - Name it "ec2_instance_profile_arn"
+# - Description should explain it returns the ARN of the instance profile
+# - Value should be the ARN of the EC2 instance profile
+# HINT: Use aws_iam_instance_profile.ec2_profile.arn
 
-output "cross_account_role_arn" {
-  description = "The ARN of the cross-account role (if created)"
-  value       = var.create_cross_account_role ? aws_iam_role.cross_account_role[0].arn : null
-}
+# TODO: Define a conditional output for cross_account_role_arn
+# Requirements:
+# - Name it "cross_account_role_arn"
+# - Description should explain it returns the ARN of the cross-account role (if created)
+# - Value should be the ARN if created, otherwise null
+# HINT: Use var.create_cross_account_role ? aws_iam_role.cross_account_role[0].arn : null
 
-output "user_group_memberships" {
-  description = "The mapping of users to groups"
-  value = {
-    for key, membership in aws_iam_user_group_membership.user_group_membership :
-    split(".", key)[0] => split(".", key)[1]
-  }
-}
+# TODO: Define an output for user_group_memberships
+# Requirements:
+# - Name it "user_group_memberships"
+# - Description should explain it returns the mapping of users to groups
+# - Value should transform the membership key into a user-to-group mapping
+# HINT: Use a for expression with split(".") to extract user and group from the key
 
-output "access_key_ids" {
-  description = "The access key IDs for the IAM users (if enabled)"
-  value       = var.create_access_keys ? { for name, key in aws_iam_access_key.user_access_keys : name => key.id } : {}
-  sensitive   = false # Access key IDs are not considered sensitive
-}
+# TODO: Define an output for access_key_ids
+# Requirements:
+# - Name it "access_key_ids"
+# - Description should explain it returns the access key IDs (if enabled)
+# - Value should be a map of user names to their access key IDs
+# - Sensitivity should be set to false (IDs are not sensitive)
+# HINT: Use var.create_access_keys ? {...} : {}
 
-output "access_key_secrets" {
-  description = "The access key secrets for the IAM users (if enabled)"
-  value       = var.create_access_keys ? { for name, key in aws_iam_access_key.user_access_keys : name => key.secret } : {}
-  sensitive   = true # Marking as sensitive to prevent display in console/logs
-} 
+# TODO: Define an output for access_key_secrets
+# Requirements:
+# - Name it "access_key_secrets"
+# - Description should explain it returns the access key secrets (if enabled)
+# - Value should be a map of user names to their access key secrets
+# - Sensitivity should be set to true (secrets are sensitive!)
+# HINT: Use var.create_access_keys ? {...} : {}

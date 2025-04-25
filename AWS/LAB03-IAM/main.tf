@@ -6,231 +6,130 @@ provider "aws" {
 # IAM Users
 # --------------------------------
 
-# Create IAM users
-resource "aws_iam_user" "lab_users" {
-  for_each = toset(var.iam_user_names)
+# TODO: Create IAM users using a for_each loop
+# Requirements:
+# - Use the iam_user_names variable (list of strings) with toset() to create users 
+# - Set name, path, and force_destroy attributes
+# - Add tags for Environment, Lab="LAB03-IAM", and CreatedBy="Terraform"
+# HINT: Use the aws_iam_user resource with for_each = toset(var.iam_user_names)
 
-  name          = each.value
-  path          = var.iam_user_path
-  force_destroy = true # Ensures user can be deleted even if it has non-Terraform-managed attachments
-
-  tags = {
-    Environment = var.environment
-    Lab         = "LAB03-IAM"
-    CreatedBy   = "Terraform"
-  }
-}
-
-# Create access keys for users if enabled
-resource "aws_iam_access_key" "user_access_keys" {
-  for_each = var.create_access_keys ? toset(var.iam_user_names) : []
-
-  user = aws_iam_user.lab_users[each.value].name
-}
+# TODO: Create access keys for users if enabled
+# Requirements:
+# - Only create access keys if var.create_access_keys is true
+# - Use for_each to create keys for each user in iam_user_names
+# - Reference the user name from the aws_iam_user resource created above
+# HINT: Use for_each = var.create_access_keys ? toset(var.iam_user_names) : []
 
 # --------------------------------
 # IAM Groups
 # --------------------------------
 
-# Create IAM groups
-resource "aws_iam_group" "lab_groups" {
-  for_each = toset(var.iam_group_names)
+# TODO: Create IAM groups using a for_each loop
+# Requirements:
+# - Use the iam_group_names variable with toset() to create groups
+# - Set name and path attributes
+# HINT: Use the aws_iam_group resource
 
-  name = each.value
-  path = var.iam_group_path
-}
-
-# Add users to groups
-resource "aws_iam_user_group_membership" "user_group_membership" {
-  for_each = {
-    for pair in var.user_group_memberships : "${pair.user}.${pair.group}" => pair
-  }
-
-  user   = aws_iam_user.lab_users[each.value.user].name
-  groups = [aws_iam_group.lab_groups[each.value.group].name]
-}
+# TODO: Add users to groups
+# Requirements:
+# - Use the user_group_memberships variable to assign users to groups
+# - Create a map from the list using a for_pair expression with a unique key
+# - Set user and groups attributes, referencing resources created above
+# HINT: for_each = { for pair in var.user_group_memberships : "${pair.user}.${pair.group}" => pair }
 
 # --------------------------------
 # IAM Policies
 # --------------------------------
 
-# Create custom policy for S3 read-only access
-resource "aws_iam_policy" "s3_read_only" {
-  name        = "CustomS3ReadOnlyAccess"
-  description = "Custom policy for S3 read-only access"
+# TODO: Create custom policy for S3 read-only access
+# Requirements:
+# - Name it "CustomS3ReadOnlyAccess"
+# - Include a description
+# - Use jsonencode to create a policy that allows:
+#   * s3:Get*, s3:List*, s3:Describe*
+#   * s3-object-lambda:Get*, s3-object-lambda:List* 
+# - Apply to all resources ("*")
+# HINT: Use the aws_iam_policy resource with jsonencode for the policy document
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:Get*",
-          "s3:List*",
-          "s3:Describe*",
-          "s3-object-lambda:Get*",
-          "s3-object-lambda:List*"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
+# TODO: Create custom policy for EC2 read-only access
+# Requirements:
+# - Name it "CustomEC2ReadOnlyAccess"
+# - Include a description
+# - Use jsonencode to create a policy that allows:
+#   * ec2:Describe*, ec2:Get*, ec2:List*
+# - Apply to all resources ("*")
+# HINT: Similar to the S3 policy above
 
-# Create custom policy for EC2 read-only access
-resource "aws_iam_policy" "ec2_read_only" {
-  name        = "CustomEC2ReadOnlyAccess"
-  description = "Custom policy for EC2 read-only access"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:Describe*",
-          "ec2:Get*",
-          "ec2:List*"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# Create a custom inline policy from JSON file
-resource "aws_iam_policy" "custom_policy" {
-  count = var.create_custom_policy ? 1 : 0
-
-  name        = "CustomTerraformLabPolicy"
-  description = "Custom policy created from JSON file"
-  policy      = file("${path.module}/policies/custom-policy.json")
-}
+# TODO: Create a custom inline policy from JSON file
+# Requirements:
+# - Only create if var.create_custom_policy is true
+# - Name it "CustomTerraformLabPolicy"
+# - Include a description
+# - Load the policy from the file at policies/custom-policy.json
+# HINT: Use count = var.create_custom_policy ? 1 : 0 and file() function
 
 # --------------------------------
 # Policy Attachments
 # --------------------------------
 
-# Attach AWS managed policies to groups
-resource "aws_iam_group_policy_attachment" "admin_group_policy" {
-  count = contains(var.iam_group_names, "Administrators") ? 1 : 0
+# TODO: Attach AWS managed policies to groups
+# Requirements:
+# - Attach AdministratorAccess to the Administrators group (if it exists)
+# - Attach PowerUserAccess to the Developers group (if it exists)
+# - Attach ReadOnlyAccess to the ReadOnly group (if it exists)
+# HINT: Use count with contains() function to check if the group exists
 
-  group      = aws_iam_group.lab_groups["Administrators"].name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
+# TODO: Attach custom S3 read-only policy to Developer and ReadOnly groups
+# Requirements:
+# - Use for_each with a conditional expression
+# - Only attach to groups in the custom_policy_attachments list
+# - Only attach if the group exists in iam_group_names
+# - Only attach to Developer or ReadOnly groups
+# HINT: for_each with a complex condition that checks multiple contains()
 
-resource "aws_iam_group_policy_attachment" "developer_group_policy" {
-  count = contains(var.iam_group_names, "Developers") ? 1 : 0
-
-  group      = aws_iam_group.lab_groups["Developers"].name
-  policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
-}
-
-resource "aws_iam_group_policy_attachment" "readonly_group_policy" {
-  count = contains(var.iam_group_names, "ReadOnly") ? 1 : 0
-
-  group      = aws_iam_group.lab_groups["ReadOnly"].name
-  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-}
-
-# Attach custom policies to groups
-resource "aws_iam_group_policy_attachment" "s3_readonly_policy_attachment" {
-  for_each = {
-    for group in var.custom_policy_attachments :
-    "${group}" => group
-    if contains(var.iam_group_names, group) && contains(["Developers", "ReadOnly"], group)
-  }
-
-  group      = aws_iam_group.lab_groups[each.key].name
-  policy_arn = aws_iam_policy.s3_read_only.arn
-}
-
-resource "aws_iam_group_policy_attachment" "ec2_readonly_policy_attachment" {
-  for_each = {
-    for group in var.custom_policy_attachments :
-    "${group}" => group
-    if contains(var.iam_group_names, group) && contains(["Developers", "ReadOnly"], group)
-  }
-
-  group      = aws_iam_group.lab_groups[each.key].name
-  policy_arn = aws_iam_policy.ec2_read_only.arn
-}
+# TODO: Attach custom EC2 read-only policy to Developer and ReadOnly groups
+# Requirements:
+# - Same conditions as the S3 policy attachment above
+# - Reference the EC2 read-only policy
+# HINT: Similar to the S3 policy attachment
 
 # --------------------------------
 # IAM Roles
 # --------------------------------
 
-# Create an IAM role for EC2 instances
-resource "aws_iam_role" "ec2_role" {
-  name = "EC2InstanceRole"
-  path = "/service-role/"
+# TODO: Create an IAM role for EC2 instances
+# Requirements:
+# - Name it "EC2InstanceRole"
+# - Set the path to "/service-role/"
+# - Create an assume_role_policy that allows ec2.amazonaws.com to assume the role
+# - Add tags for Environment, Lab, and CreatedBy
+# HINT: Use jsonencode for the assume_role_policy
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      }
-    ]
-  })
+# TODO: Attach S3 read-only policy to EC2 role
+# Requirements:
+# - Attach the S3 read-only policy created above to the EC2 role
+# HINT: Use aws_iam_role_policy_attachment resource
 
-  tags = {
-    Environment = var.environment
-    Lab         = "LAB03-IAM"
-    CreatedBy   = "Terraform"
-  }
-}
-
-# Attach S3 read-only policy to EC2 role
-resource "aws_iam_role_policy_attachment" "ec2_s3_readonly" {
-  role       = aws_iam_role.ec2_role.name
-  policy_arn = aws_iam_policy.s3_read_only.arn
-}
-
-# Create an instance profile for the EC2 role
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "EC2InstanceProfile"
-  role = aws_iam_role.ec2_role.name
-}
+# TODO: Create an instance profile for the EC2 role
+# Requirements:
+# - Name it "EC2InstanceProfile"
+# - Associate it with the EC2 role created above
+# HINT: Use aws_iam_instance_profile resource
 
 # --------------------------------
 # Optional: Cross-Account Role
 # --------------------------------
 
-# Create a role for cross-account access if enabled
-resource "aws_iam_role" "cross_account_role" {
-  count = var.create_cross_account_role ? 1 : 0
-
-  name = "CrossAccountRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = "sts:AssumeRole"
-        Principal = {
-          AWS = var.trusted_account_id != null ? "arn:aws:iam::${var.trusted_account_id}:root" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
-        Condition = {
-          StringEquals = {
-            "aws:PrincipalTag/Environment" = var.environment
-          }
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Environment = var.environment
-    Lab         = "LAB03-IAM"
-    CreatedBy   = "Terraform"
-  }
-}
+# TODO: Create a role for cross-account access if enabled
+# Requirements:
+# - Only create if var.create_cross_account_role is true
+# - Name it "CrossAccountRole"
+# - Create an assume_role_policy that:
+#   * Allows sts:AssumeRole action
+#   * Specifies the AWS account from trusted_account_id (or current account if null)
+#   * Includes a condition that requires Environment tag to match var.environment
+# - Add appropriate tags
+# HINT: Use count and jsonencode for the policy, reference data source for current account
 
 # Get the current account ID
 data "aws_caller_identity" "current" {}

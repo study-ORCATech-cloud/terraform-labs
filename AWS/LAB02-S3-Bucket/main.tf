@@ -2,178 +2,78 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Create an S3 bucket with versioning enabled
-resource "aws_s3_bucket" "lab02_bucket" {
-  bucket = var.bucket_name
+# TODO: Create an S3 bucket
+# Requirements:
+# - Use the bucket_name variable for the bucket name
+# - Add tags: Name=var.bucket_name, Environment=var.environment, Lab="LAB02-S3-Bucket"
+# HINT: Use the aws_s3_bucket resource
 
-  tags = {
-    Name        = var.bucket_name
-    Environment = var.environment
-    Lab         = "LAB02-S3-Bucket"
-  }
-}
 
-# Add versioning configuration
-resource "aws_s3_bucket_versioning" "lab02_bucket_versioning" {
-  bucket = aws_s3_bucket.lab02_bucket.id
+# TODO: Configure bucket versioning
+# Requirements:
+# - Enable or suspend versioning based on the versioning_enabled variable
+# - Use the bucket ID from the bucket you created above
+# HINT: Use the aws_s3_bucket_versioning resource
 
-  versioning_configuration {
-    status = var.versioning_enabled ? "Enabled" : "Suspended"
-  }
-}
 
-# Configure bucket ownership
-resource "aws_s3_bucket_ownership_controls" "lab02_bucket_ownership" {
-  bucket = aws_s3_bucket.lab02_bucket.id
+# TODO: Configure bucket ownership
+# Requirements:
+# - Set object_ownership to "BucketOwnerPreferred"
+# - Use the bucket ID from the bucket you created above
+# HINT: Use the aws_s3_bucket_ownership_controls resource
 
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
-}
 
-# Configure public access block settings
-resource "aws_s3_bucket_public_access_block" "lab02_public_access" {
-  bucket                  = aws_s3_bucket.lab02_bucket.id
-  block_public_acls       = !var.allow_public_access
-  block_public_policy     = !var.allow_public_access
-  ignore_public_acls      = !var.allow_public_access
-  restrict_public_buckets = !var.allow_public_access
-}
+# TODO: Configure public access block settings
+# Requirements:
+# - Block or allow public access based on the allow_public_access variable
+# - Remember to negate the variable value since block_public_* expects the opposite
+# - Set all four settings: block_public_acls, block_public_policy, 
+#   ignore_public_acls, restrict_public_buckets
+# HINT: Use the aws_s3_bucket_public_access_block resource
 
-# Configure ACLs (only applied when public access is allowed)
-resource "aws_s3_bucket_acl" "lab02_bucket_acl" {
-  depends_on = [
-    aws_s3_bucket_ownership_controls.lab02_bucket_ownership,
-    aws_s3_bucket_public_access_block.lab02_public_access,
-  ]
 
-  bucket = aws_s3_bucket.lab02_bucket.id
-  acl    = var.allow_public_access ? "public-read" : "private"
-}
+# TODO: Configure bucket ACL
+# Requirements:
+# - Set ACL to "public-read" if allow_public_access is true, otherwise "private"
+# - Make sure this depends on both the ownership controls and public access block settings
+# - Use the bucket ID from the bucket you created above
+# HINT: Use the aws_s3_bucket_acl resource and depends_on
 
-# Enable static website hosting if specified
-resource "aws_s3_bucket_website_configuration" "lab02_website" {
-  count  = var.enable_static_website ? 1 : 0
-  bucket = aws_s3_bucket.lab02_bucket.id
 
-  index_document {
-    suffix = "index.html"
-  }
+# TODO: Configure static website hosting (conditional resource)
+# Requirements:
+# - Only create this resource if enable_static_website is true (use count)
+# - Set index_document suffix to "index.html"
+# - Set error_document key to "error.html"
+# - Use the bucket ID from the bucket you created above
+# HINT: Use the aws_s3_bucket_website_configuration resource
 
-  error_document {
-    key = "error.html"
-  }
-}
 
-# Add bucket policy for public access when website hosting is enabled
-resource "aws_s3_bucket_policy" "lab02_bucket_policy" {
-  count  = var.enable_static_website && var.allow_public_access ? 1 : 0
-  bucket = aws_s3_bucket.lab02_bucket.id
+# TODO: Add bucket policy for public access (conditional resource)
+# Requirements:
+# - Only create this policy if both enable_static_website AND allow_public_access are true
+# - Create a policy that allows s3:GetObject action for all objects in the bucket
+# - Make sure this depends on the public access block settings
+# HINT: Use the aws_s3_bucket_policy resource and jsonencode function
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.lab02_bucket.arn}/*"
-      },
-    ]
-  })
 
-  depends_on = [
-    aws_s3_bucket_public_access_block.lab02_public_access
-  ]
-}
+# TODO: Upload index.html file for website (conditional resource)
+# Requirements:
+# - Only upload this file if enable_static_website is true
+# - Create an HTML page with:
+#   * A title and heading indicating success
+#   * Some styling (colors, fonts, etc.)
+#   * A list of accomplishments
+#   * A timestamp showing when it was created
+# - Set the content_type to "text/html"
+# HINT: Use the aws_s3_object resource and heredoc syntax
 
-# Optionally upload example files for website hosting
-resource "aws_s3_object" "lab02_index_html" {
-  count        = var.enable_static_website ? 1 : 0
-  bucket       = aws_s3_bucket.lab02_bucket.id
-  key          = "index.html"
-  content      = <<EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Terraform S3 Lab Website</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            color: #333;
-        }
-        h1 {
-            color: #0066cc;
-        }
-        .success {
-            padding: 20px;
-            background-color: #e6f7ff;
-            border-left: 5px solid #0066cc;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="success">
-        <h1>Success! Your S3 Website is Live</h1>
-        <p>This page was created through Terraform as part of LAB02-S3-Bucket.</p>
-    </div>
-    <h2>What You've Accomplished:</h2>
-    <ul>
-        <li>Created an S3 bucket with Terraform</li>
-        <li>Configured proper bucket settings</li>
-        <li>Enabled static website hosting</li>
-        <li>Uploaded this index.html file</li>
-    </ul>
-    <p>Timestamp: ${timestamp()}</p>
-</body>
-</html>
-EOF
-  content_type = "text/html"
-}
 
-resource "aws_s3_object" "lab02_error_html" {
-  count        = var.enable_static_website ? 1 : 0
-  bucket       = aws_s3_bucket.lab02_bucket.id
-  key          = "error.html"
-  content      = <<EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Error - Terraform S3 Lab</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            color: #333;
-        }
-        h1 {
-            color: #cc0000;
-        }
-        .error {
-            padding: 20px;
-            background-color: #ffebe6;
-            border-left: 5px solid #cc0000;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="error">
-        <h1>Error 404 - Page Not Found</h1>
-        <p>The requested file was not found in this S3 bucket.</p>
-    </div>
-    <p>Return to <a href="/index.html">home page</a>.</p>
-</body>
-</html>
-EOF
-  content_type = "text/html"
-}
+# TODO: Upload error.html file for website (conditional resource)
+# Requirements:
+# - Only upload this file if enable_static_website is true
+# - Create an HTML page styled differently from the index page
+# - Include a 404 error message
+# - Include a link back to the index page
+# - Set the content_type to "text/html"
+# HINT: Use the aws_s3_object resource and heredoc syntax

@@ -6,528 +6,233 @@ provider "aws" {
 # VPC
 # ---------------------------------------
 
-# Create the VPC
-resource "aws_vpc" "lab_vpc" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = {
-    Name        = "${var.name_prefix}-vpc"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
+# TODO: Create the VPC
+# Requirements:
+# - Use the vpc_cidr variable for the CIDR block
+# - Enable DNS hostnames and DNS support
+# - Add tags: Name="{name_prefix}-vpc", Environment, Lab="LAB04-VPC", Terraform="true"
+# HINT: Use the aws_vpc resource with enable_dns_hostnames and enable_dns_support
 
 # ---------------------------------------
 # Subnets
 # ---------------------------------------
 
-# Create public subnets
-resource "aws_subnet" "public_subnets" {
-  count = length(var.public_subnet_cidrs)
+# TODO: Create public subnets
+# Requirements:
+# - Create subnets for each CIDR in public_subnet_cidrs using count
+# - Place in different AZs using the availability_zones variable and element() function
+# - Enable auto-assign public IP with map_public_ip_on_launch = true
+# - Add appropriate tags including a "Type" = "Public" tag
+# HINT: Use the aws_subnet resource with count = length(var.public_subnet_cidrs)
 
-  vpc_id                  = aws_vpc.lab_vpc.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = element(var.availability_zones, count.index)
-  map_public_ip_on_launch = true
+# TODO: Create private subnets
+# Requirements:
+# - Create subnets for each CIDR in private_subnet_cidrs using count
+# - Place in different AZs using the availability_zones variable
+# - Do NOT enable auto-assign public IP (set to false)
+# - Add appropriate tags including a "Type" = "Private" tag
+# HINT: Similar to public subnets but with different CIDR blocks and tags
 
-  tags = {
-    Name        = "${var.name_prefix}-public-subnet-${count.index + 1}"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Public"
-  }
-}
-
-# Create private subnets
-resource "aws_subnet" "private_subnets" {
-  count = length(var.private_subnet_cidrs)
-
-  vpc_id                  = aws_vpc.lab_vpc.id
-  cidr_block              = var.private_subnet_cidrs[count.index]
-  availability_zone       = element(var.availability_zones, count.index)
-  map_public_ip_on_launch = false
-
-  tags = {
-    Name        = "${var.name_prefix}-private-subnet-${count.index + 1}"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Private"
-  }
-}
-
-# Create database subnets
-resource "aws_subnet" "database_subnets" {
-  count = length(var.database_subnet_cidrs)
-
-  vpc_id                  = aws_vpc.lab_vpc.id
-  cidr_block              = var.database_subnet_cidrs[count.index]
-  availability_zone       = element(var.availability_zones, count.index)
-  map_public_ip_on_launch = false
-
-  tags = {
-    Name        = "${var.name_prefix}-database-subnet-${count.index + 1}"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Database"
-  }
-}
+# TODO: Create database subnets
+# Requirements:
+# - Create subnets for each CIDR in database_subnet_cidrs using count
+# - Place in different AZs using the availability_zones variable
+# - Do NOT enable auto-assign public IP (set to false)
+# - Add appropriate tags including a "Type" = "Database" tag
+# HINT: Similar to private subnets but with different CIDR blocks and tags
 
 # ---------------------------------------
 # Internet Gateway and NAT Gateway
 # ---------------------------------------
 
-# Create an Internet Gateway
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.lab_vpc.id
+# TODO: Create an Internet Gateway
+# Requirements:
+# - Attach it to the VPC created above
+# - Add appropriate tags
+# HINT: Use the aws_internet_gateway resource with vpc_id
 
-  tags = {
-    Name        = "${var.name_prefix}-igw"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
+# TODO: Create Elastic IP for NAT Gateway
+# Requirements:
+# - Only create if var.create_nat_gateway is true
+# - Set domain = "vpc"
+# - Add appropriate tags
+# HINT: Use count = var.create_nat_gateway ? 1 : 0 
 
-# Create Elastic IP for NAT Gateway
-resource "aws_eip" "nat_eip" {
-  count  = var.create_nat_gateway ? 1 : 0
-  domain = "vpc"
-
-  tags = {
-    Name        = "${var.name_prefix}-nat-eip"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
-
-# Create NAT Gateway
-resource "aws_nat_gateway" "nat_gateway" {
-  count         = var.create_nat_gateway ? 1 : 0
-  allocation_id = aws_eip.nat_eip[0].id
-  subnet_id     = aws_subnet.public_subnets[0].id
-
-  tags = {
-    Name        = "${var.name_prefix}-nat-gateway"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-
-  # To ensure proper ordering, it is recommended to add an explicit dependency
-  # on the Internet Gateway for the VPC
-  depends_on = [aws_internet_gateway.igw]
-}
+# TODO: Create NAT Gateway
+# Requirements:
+# - Only create if var.create_nat_gateway is true
+# - Use the Elastic IP created above
+# - Place in the first public subnet
+# - Add appropriate tags
+# - Add an explicit dependency on the Internet Gateway
+# HINT: Use depends_on = [aws_internet_gateway.igw]
 
 # ---------------------------------------
 # Route Tables and Routes
 # ---------------------------------------
 
-# Create public route table
-resource "aws_route_table" "public_route_table" {
-  vpc_id = aws_vpc.lab_vpc.id
+# TODO: Create public route table
+# Requirements:
+# - Associate with the VPC
+# - Add appropriate tags including a "Type" = "Public" tag
+# HINT: Use the aws_route_table resource
 
-  tags = {
-    Name        = "${var.name_prefix}-public-rt"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Public"
-  }
-}
+# TODO: Create public route to Internet Gateway
+# Requirements:
+# - Add a default route (0.0.0.0/0) pointing to the Internet Gateway
+# HINT: Use the aws_route resource with destination_cidr_block = "0.0.0.0/0"
 
-# Create public route
-resource "aws_route" "public_internet_route" {
-  route_table_id         = aws_route_table.public_route_table.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.igw.id
-}
+# TODO: Create private route table
+# Requirements:
+# - Associate with the VPC
+# - Add appropriate tags including a "Type" = "Private" tag
+# HINT: Similar to the public route table
 
-# Create private route table
-resource "aws_route_table" "private_route_table" {
-  vpc_id = aws_vpc.lab_vpc.id
+# TODO: Create private route to NAT Gateway (if enabled)
+# Requirements:
+# - Only create if var.create_nat_gateway is true
+# - Add a default route (0.0.0.0/0) pointing to the NAT Gateway
+# HINT: Use count and reference the NAT Gateway with index [0]
 
-  tags = {
-    Name        = "${var.name_prefix}-private-rt"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Private"
-  }
-}
+# TODO: Create database route table
+# Requirements:
+# - Associate with the VPC
+# - Add appropriate tags including a "Type" = "Database" tag
+# HINT: Similar to the private route table
 
-# Create private route to NAT Gateway (if enabled)
-resource "aws_route" "private_nat_route" {
-  count                  = var.create_nat_gateway ? 1 : 0
-  route_table_id         = aws_route_table.private_route_table.id
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.nat_gateway[0].id
-}
+# TODO: Associate public subnets with public route table
+# Requirements:
+# - Loop through each public subnet using count
+# - Associate each subnet with the public route table
+# HINT: Use the aws_route_table_association resource
 
-# Create database route table
-resource "aws_route_table" "database_route_table" {
-  vpc_id = aws_vpc.lab_vpc.id
+# TODO: Associate private subnets with private route table
+# Requirements:
+# - Loop through each private subnet using count
+# - Associate each subnet with the private route table
+# HINT: Similar to the public subnet associations
 
-  tags = {
-    Name        = "${var.name_prefix}-database-rt"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Database"
-  }
-}
-
-# Associate public subnets with public route table
-resource "aws_route_table_association" "public_rt_association" {
-  count          = length(var.public_subnet_cidrs)
-  subnet_id      = aws_subnet.public_subnets[count.index].id
-  route_table_id = aws_route_table.public_route_table.id
-}
-
-# Associate private subnets with private route table
-resource "aws_route_table_association" "private_rt_association" {
-  count          = length(var.private_subnet_cidrs)
-  subnet_id      = aws_subnet.private_subnets[count.index].id
-  route_table_id = aws_route_table.private_route_table.id
-}
-
-# Associate database subnets with database route table
-resource "aws_route_table_association" "database_rt_association" {
-  count          = length(var.database_subnet_cidrs)
-  subnet_id      = aws_subnet.database_subnets[count.index].id
-  route_table_id = aws_route_table.database_route_table.id
-}
+# TODO: Associate database subnets with database route table
+# Requirements:
+# - Loop through each database subnet using count
+# - Associate each subnet with the database route table
+# HINT: Similar to the private subnet associations
 
 # ---------------------------------------
 # NACL (Network Access Control Lists)
 # ---------------------------------------
 
-# Create NACL for public subnets
-resource "aws_network_acl" "public_nacl" {
-  vpc_id     = aws_vpc.lab_vpc.id
-  subnet_ids = aws_subnet.public_subnets[*].id
+# TODO: Create NACL for public subnets
+# Requirements:
+# - Associate with the VPC and all public subnets
+# - Add appropriate tags including a "Type" = "Public" tag
+# HINT: Use aws_network_acl with subnet_ids = aws_subnet.public_subnets[*].id
 
-  tags = {
-    Name        = "${var.name_prefix}-public-nacl"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Public"
-  }
-}
+# TODO: Create NACL for private subnets
+# Requirements:
+# - Associate with the VPC and all private subnets
+# - Add appropriate tags including a "Type" = "Private" tag
+# HINT: Similar to the public NACL
 
-# Create NACL for private subnets
-resource "aws_network_acl" "private_nacl" {
-  vpc_id     = aws_vpc.lab_vpc.id
-  subnet_ids = aws_subnet.private_subnets[*].id
+# TODO: Create NACL for database subnets
+# Requirements:
+# - Associate with the VPC and all database subnets
+# - Add appropriate tags including a "Type" = "Database" tag
+# HINT: Similar to the private NACL
 
-  tags = {
-    Name        = "${var.name_prefix}-private-nacl"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Private"
-  }
-}
+# TODO: Create NACL rules for public subnets - ingress
+# Requirements:
+# - Use the public_inbound_acl_rules variable with count
+# - Set egress = false for inbound rules
+# - Configure the rule number, action, ports, protocol, and CIDR from the variable
+# HINT: Use lookup() for optional fields that might be null
 
-# Create NACL for database subnets
-resource "aws_network_acl" "database_nacl" {
-  vpc_id     = aws_vpc.lab_vpc.id
-  subnet_ids = aws_subnet.database_subnets[*].id
-
-  tags = {
-    Name        = "${var.name_prefix}-database-nacl"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-    Type        = "Database"
-  }
-}
-
-# NACL rules for public subnets - ingress
-resource "aws_network_acl_rule" "public_ingress" {
-  count          = length(var.public_inbound_acl_rules)
-  network_acl_id = aws_network_acl.public_nacl.id
-
-  egress      = false
-  rule_number = var.public_inbound_acl_rules[count.index]["rule_number"]
-  rule_action = var.public_inbound_acl_rules[count.index]["rule_action"]
-  from_port   = lookup(var.public_inbound_acl_rules[count.index], "from_port", null)
-  to_port     = lookup(var.public_inbound_acl_rules[count.index], "to_port", null)
-  protocol    = var.public_inbound_acl_rules[count.index]["protocol"]
-  cidr_block  = lookup(var.public_inbound_acl_rules[count.index], "cidr_block", null)
-}
-
-# NACL rules for public subnets - egress
-resource "aws_network_acl_rule" "public_egress" {
-  count          = length(var.public_outbound_acl_rules)
-  network_acl_id = aws_network_acl.public_nacl.id
-
-  egress      = true
-  rule_number = var.public_outbound_acl_rules[count.index]["rule_number"]
-  rule_action = var.public_outbound_acl_rules[count.index]["rule_action"]
-  from_port   = lookup(var.public_outbound_acl_rules[count.index], "from_port", null)
-  to_port     = lookup(var.public_outbound_acl_rules[count.index], "to_port", null)
-  protocol    = var.public_outbound_acl_rules[count.index]["protocol"]
-  cidr_block  = lookup(var.public_outbound_acl_rules[count.index], "cidr_block", null)
-}
+# TODO: Create NACL rules for public subnets - egress
+# Requirements:
+# - Use the public_outbound_acl_rules variable with count
+# - Set egress = true for outbound rules
+# - Configure the rule number, action, ports, protocol, and CIDR from the variable
+# HINT: Similar to the ingress rules but with egress = true
 
 # ---------------------------------------
 # Security Groups
 # ---------------------------------------
 
-# Create default security group for public instances
-resource "aws_security_group" "public_sg" {
-  name        = "${var.name_prefix}-public-sg"
-  description = "Security group for public instances"
-  vpc_id      = aws_vpc.lab_vpc.id
+# TODO: Create security group for public instances
+# Requirements:
+# - Name it "{name_prefix}-public-sg"
+# - Create ingress rules for SSH (22), HTTP (80), and HTTPS (443) from anywhere (0.0.0.0/0)
+# - Create an egress rule allowing all outbound traffic
+# - Add appropriate tags
+# HINT: Use aws_security_group with multiple ingress blocks
 
-  # Allow SSH from anywhere
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow SSH access from anywhere"
-  }
+# TODO: Create security group for private instances
+# Requirements:
+# - Name it "{name_prefix}-private-sg"
+# - Create ingress rules for SSH (22), HTTP (80), and HTTPS (443) from within VPC only
+# - Create an egress rule allowing all outbound traffic
+# - Add appropriate tags
+# HINT: Similar to public SG but with cidr_blocks = [var.vpc_cidr]
 
-  # Allow HTTP from anywhere
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTP access from anywhere"
-  }
-
-  # Allow HTTPS from anywhere
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow HTTPS access from anywhere"
-  }
-
-  # Allow all outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name        = "${var.name_prefix}-public-sg"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
-
-# Create default security group for private instances
-resource "aws_security_group" "private_sg" {
-  name        = "${var.name_prefix}-private-sg"
-  description = "Security group for private instances"
-  vpc_id      = aws_vpc.lab_vpc.id
-
-  # Allow SSH from VPC CIDR
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-    description = "Allow SSH access from within VPC"
-  }
-
-  # Allow HTTP from VPC CIDR
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-    description = "Allow HTTP access from within VPC"
-  }
-
-  # Allow HTTPS from VPC CIDR
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-    description = "Allow HTTPS access from within VPC"
-  }
-
-  # Allow all outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name        = "${var.name_prefix}-private-sg"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
-
-# Create default security group for database instances
-resource "aws_security_group" "database_sg" {
-  name        = "${var.name_prefix}-database-sg"
-  description = "Security group for database instances"
-  vpc_id      = aws_vpc.lab_vpc.id
-
-  # Allow MySQL/Aurora from private subnets
-  ingress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.private_sg.id]
-    description     = "Allow MySQL/Aurora access from private instances"
-  }
-
-  # Allow PostgreSQL from private subnets
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.private_sg.id]
-    description     = "Allow PostgreSQL access from private instances"
-  }
-
-  # Allow all outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name        = "${var.name_prefix}-database-sg"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
+# TODO: Create security group for database instances
+# Requirements:
+# - Name it "{name_prefix}-database-sg"
+# - Create ingress rules for MySQL (3306) and PostgreSQL (5432) from private instances only
+# - Create an egress rule allowing all outbound traffic
+# - Add appropriate tags
+# HINT: Use security_groups = [aws_security_group.private_sg.id] for the ingress rules
 
 # ---------------------------------------
 # VPC Endpoints (Optional)
 # ---------------------------------------
 
-# Create S3 VPC endpoint if enabled
-resource "aws_vpc_endpoint" "s3" {
-  count        = var.create_s3_endpoint ? 1 : 0
-  vpc_id       = aws_vpc.lab_vpc.id
-  service_name = "com.amazonaws.${var.aws_region}.s3"
+# TODO: Create S3 VPC endpoint if enabled
+# Requirements:
+# - Only create if var.create_s3_endpoint is true
+# - Connect to the VPC and use the S3 service in the current region
+# - Add appropriate tags
+# HINT: Use count and service_name = "com.amazonaws.${var.aws_region}.s3"
 
-  tags = {
-    Name        = "${var.name_prefix}-s3-endpoint"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
-
-# Associate S3 endpoint with route tables
-resource "aws_vpc_endpoint_route_table_association" "private_s3_endpoint" {
-  count           = var.create_s3_endpoint ? 1 : 0
-  route_table_id  = aws_route_table.private_route_table.id
-  vpc_endpoint_id = aws_vpc_endpoint.s3[0].id
-}
+# TODO: Associate S3 endpoint with private route table
+# Requirements:
+# - Only create if var.create_s3_endpoint is true
+# - Associate the S3 endpoint with the private route table
+# HINT: Use aws_vpc_endpoint_route_table_association with count
 
 # ---------------------------------------
 # Optional: VPC Flow Logs
 # ---------------------------------------
 
-# Create CloudWatch log group for VPC Flow Logs if enabled
-resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  count             = var.enable_vpc_flow_logs ? 1 : 0
-  name              = "/aws/vpc/flow-logs/${aws_vpc.lab_vpc.id}"
-  retention_in_days = 7
+# TODO: Create CloudWatch log group for VPC Flow Logs
+# Requirements:
+# - Only create if var.enable_vpc_flow_logs is true
+# - Name it "/aws/vpc/flow-logs/{vpc-id}"
+# - Set retention to 7 days
+# - Add appropriate tags
+# HINT: Use count and reference the VPC ID
 
-  tags = {
-    Name        = "${var.name_prefix}-vpc-flow-logs"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
+# TODO: Create IAM role for VPC Flow Logs
+# Requirements:
+# - Only create if var.enable_vpc_flow_logs is true
+# - Name it "{name_prefix}-vpc-flow-logs-role"
+# - Create an assume_role_policy that allows vpc-flow-logs.amazonaws.com to assume the role
+# - Add appropriate tags
+# HINT: Use jsonencode for the assume_role_policy
 
-# Create IAM role for VPC Flow Logs
-resource "aws_iam_role" "vpc_flow_logs_role" {
-  count = var.enable_vpc_flow_logs ? 1 : 0
-  name  = "${var.name_prefix}-vpc-flow-logs-role"
+# TODO: Create IAM policy for VPC Flow Logs
+# Requirements:
+# - Only create if var.enable_vpc_flow_logs is true
+# - Name it "{name_prefix}-vpc-flow-logs-policy"
+# - Add permissions to create log streams, put log events, and describe log groups/streams
+# - Attach to the IAM role created above
+# HINT: Use jsonencode for the policy document
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "vpc-flow-logs.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name        = "${var.name_prefix}-vpc-flow-logs-role"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-}
-
-# Create IAM policy for VPC Flow Logs
-resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
-  count = var.enable_vpc_flow_logs ? 1 : 0
-  name  = "${var.name_prefix}-vpc-flow-logs-policy"
-  role  = aws_iam_role.vpc_flow_logs_role[0].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# Create VPC Flow Logs
-resource "aws_flow_log" "vpc_flow_logs" {
-  count                = var.enable_vpc_flow_logs ? 1 : 0
-  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
-  log_destination_type = "cloud-watch-logs"
-  traffic_type         = "ALL"
-  vpc_id               = aws_vpc.lab_vpc.id
-  iam_role_arn         = aws_iam_role.vpc_flow_logs_role[0].arn
-
-  tags = {
-    Name        = "${var.name_prefix}-vpc-flow-logs"
-    Environment = var.environment
-    Lab         = "LAB04-VPC"
-    Terraform   = "true"
-  }
-} 
+# TODO: Create VPC Flow Logs
+# Requirements:
+# - Only create if var.enable_vpc_flow_logs is true
+# - Set log destination to the CloudWatch log group ARN
+# - Set log_destination_type to "cloud-watch-logs"
+# - Capture all traffic (traffic_type = "ALL")
+# - Use the IAM role created above
+# - Add appropriate tags
+# HINT: Use aws_flow_log with count 

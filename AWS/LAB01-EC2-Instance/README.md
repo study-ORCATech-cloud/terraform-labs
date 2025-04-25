@@ -11,7 +11,9 @@ In this lab, you'll use **Terraform** to provision a basic EC2 instance running 
 - Initialize a Terraform working directory
 - Configure the AWS provider
 - Define and use input variables
-- Deploy an EC2 instance with a security group
+- Create a security group for your EC2 instance
+- Create and use an SSH key pair for secure access
+- Deploy an EC2 instance with a web server
 - Output key resource information
 - Clean up resources to avoid unexpected charges
 
@@ -83,11 +85,24 @@ AWS/LAB01-EC2-Instance/
 2. Edit the `terraform.tfvars` file to customize your deployment:
    ```bash
    # Example modifications
-   aws_region    = "eu-west-1"  # Change region
-   instance_type = "t3.micro"   # Change instance type
+   aws_region    = "eu-west-1"  # Change region if needed
+   instance_type = "t2.micro"   # Change instance type if desired
+   key_name      = "my-key-pair" # Set your preferred key name
    ```
 
-### Step 4: Review the Execution Plan
+### Step 4: Complete the TODO Sections
+
+This lab contains several TODO sections that you need to complete:
+
+1. In `main.tf`:
+   - Create a security group that allows SSH and HTTP traffic
+   - Create a key pair for SSH access
+   - Create an EC2 instance with the specified requirements
+
+2. In `outputs.tf`:
+   - Define outputs for instance ID, public IP, public DNS, security group ID, and SSH command
+
+### Step 5: Review the Execution Plan
 
 1. Generate and review an execution plan:
    ```bash
@@ -95,10 +110,11 @@ AWS/LAB01-EC2-Instance/
    ```
 
 2. Verify the resources to be created:
-   - Security group rules
-   - EC2 instance configuration
+   - Security group with proper inbound/outbound rules
+   - Key pair for SSH access
+   - EC2 instance with user data script for Apache installation
 
-### Step 5: Apply the Configuration
+### Step 6: Apply the Configuration
 
 1. Apply the Terraform configuration:
    ```bash
@@ -109,11 +125,13 @@ AWS/LAB01-EC2-Instance/
 
 3. Wait for the infrastructure to be provisioned (typically 1-2 minutes)
 
-### Step 6: Explore Your Deployment
+### Step 7: Explore Your Deployment
 
 1. After successful application, Terraform will output:
    - Instance ID
    - Public IP address
+   - Public DNS name
+   - Security group ID
    - SSH connection command
 
 2. Access the web server by opening the public IP in a browser:
@@ -144,13 +162,15 @@ Establishes the connection to AWS in the specified region.
   - Allows inbound SSH (port 22) for remote management
   - Allows inbound HTTP (port 80) for web server access
   - Allows all outbound traffic
+- **Key Pair**: Registers your public SSH key for secure access
 
 ### Computing
-- **Key Pair**: Registers your public SSH key for secure access
 - **EC2 Instance**: Provisions a virtual machine with:
   - Amazon Linux 2 AMI
   - t2.micro instance type (free tier eligible)
-  - User data script to install and configure Apache
+  - 8GB root volume of gp2 type
+  - User data script to install and configure Apache web server
+  - Appropriate tags for resource management
 
 ---
 
@@ -159,8 +179,9 @@ Establishes the connection to AWS in the specified region.
 - **Infrastructure as Code**: Managing infrastructure through code offers repeatability and version control
 - **Resource Dependencies**: Terraform automatically handles resource creation order
 - **User Data**: Bootstrapping instances at launch saves manual configuration
+- **Security Groups**: Configuring network access controls for cloud resources
 - **Output Values**: Retrieving deployment information streamlines usage
-- **Variable Defaults**: Setting sensible defaults while allowing customization
+- **Variable Usage**: Setting sensible defaults while allowing customization
 
 ---
 
@@ -186,6 +207,12 @@ Establishes the connection to AWS in the specified region.
    ```
    **Solution**: Request a service limit increase or use a different instance type.
 
+4. **Security Group Rules**:
+   ```
+   Error: Error creating Security Group: InvalidParameterValue
+   ```
+   **Solution**: Ensure CIDR blocks and protocol specifications are correctly formatted.
+
 ---
 
 ## ✅ Challenge Exercises
@@ -195,6 +222,7 @@ Ready for more? Try these enhancements:
 1. **Add Tags**: Implement additional tags like Owner, Project, or Cost Center
 2. **Modify User Data**: Update the script to install and configure a different web server (like Nginx)
 3. **Create Custom VPC**: Extend the configuration to create a custom VPC instead of using the default VPC
+4. **Add an Elastic IP**: Modify the configuration to associate an Elastic IP with your instance
 
 ---
 
@@ -228,6 +256,7 @@ To avoid ongoing charges for the resources created in this lab:
 - [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [EC2 Instance Types](https://aws.amazon.com/ec2/instance-types/)
 - [AWS Security Groups Documentation](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
+- [User Data Scripts for EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html)
 
 ---
 
