@@ -2,225 +2,93 @@ provider "aws" {
   region = var.region
 }
 
-# Create an S3 bucket with versioning and lifecycle rules
-resource "aws_s3_bucket" "lifecycle_demo" {
-  bucket = var.bucket_name
+# TODO: Create an S3 bucket with versioning and lifecycle rules
+# Requirements:
+# - Use the bucket name from var.bucket_name 
+# - Add appropriate tags (Name, Environment, Project)
+# - The bucket must be created before you can configure its properties
 
-  tags = {
-    Name        = "S3 Lifecycle Demo Bucket"
-    Environment = "Lab"
-    Project     = "Terraform-Labs"
-  }
-}
+# TODO: Configure bucket versioning
+# Requirements:
+# - Enable versioning on the bucket you created above
+# - Remember to reference the bucket id correctly
 
-# Configure bucket versioning
-resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.lifecycle_demo.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
+# TODO: Configure server-side encryption
+# Requirements:
+# - Apply server-side encryption using AES256 algorithm
+# - This provides at-rest encryption for all objects in the bucket
 
-# Configure server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
-  bucket = aws_s3_bucket.lifecycle_demo.id
+# TODO: Configure public access block to secure the bucket
+# Requirements:
+# - Block all public access to the bucket using the aws_s3_bucket_public_access_block resource
+# - Set all block_public_* and restrict_public_* properties to true
 
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
+# TODO: Configure lifecycle rules for standard tier objects
+# Requirements:
+# - Create an aws_s3_bucket_lifecycle_configuration resource
+# - Implement the following rules:
 
-# Configure public access block (block all public access)
-resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket = aws_s3_bucket.lifecycle_demo.id
+# Rule 1: Transition standard tier objects to Standard-IA after 30 days
+# - Set appropriate ID and Enabled status
+# - Use var.standard_prefix for the filter prefix
+# - Set transition days using var.days_to_standard_ia
+# - Target storage class should be "STANDARD_IA"
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
+# Rule 2: Transition standard objects to Glacier after 60 days
+# - Set appropriate ID and Enabled status
+# - Use var.standard_prefix for the filter prefix
+# - Set transition days using var.days_to_glacier
+# - Target storage class should be "GLACIER"
+# - Optionally configure expiration after var.days_to_expiration days
 
-# Configure lifecycle rules for standard tier objects
-resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_rules" {
-  bucket = aws_s3_bucket.lifecycle_demo.id
+# Rule 3: Manage old versions
+# - Set appropriate ID and Enabled status
+# - Use empty prefix to apply to all objects
+# - Configure noncurrent_version_expiration after var.days_to_delete_noncurrent days
+# - Add a transition for non-current versions to Glacier after 30 days
 
-  # Rule 1: Transition standard tier objects to Standard-IA after 30 days
-  rule {
-    id     = "transition-to-standard-ia"
-    status = "Enabled"
+# Rule 4: Manage incomplete multipart uploads
+# - Set appropriate ID and Enabled status
+# - Use empty prefix to apply to all objects
+# - Configure abort_incomplete_multipart_upload after 7 days
 
-    filter {
-      prefix = var.standard_prefix
-    }
+# Rule 5: Special configuration for logs
+# - Set appropriate ID and Enabled status
+# - Use var.logs_prefix for the filter prefix
+# - Add transition to STANDARD_IA after 30 days
+# - Add transition to GLACIER after 60 days
+# - Add expiration after 180 days
 
-    transition {
-      days          = var.days_to_standard_ia
-      storage_class = "STANDARD_IA"
-    }
-  }
+# TODO: Create a bucket policy to deny non-HTTPS access
+# Requirements:
+# - Use the aws_s3_bucket_policy resource
+# - Create a policy that denies all S3 actions when aws:SecureTransport is false
+# - Apply the policy to both the bucket itself and all objects inside it
+# - Use the jsonencode function to create the policy document
 
-  # Rule 2: Transition standard objects to Glacier after 60 days
-  rule {
-    id     = "transition-to-glacier"
-    status = "Enabled"
+# TODO: Create folder prefixes in the bucket
+# Requirements:
+# - Create empty objects with keys ending in "/" to represent folders
+# - Create folders for standard, logs, and archive prefixes
 
-    filter {
-      prefix = var.standard_prefix
-    }
+# TODO: Create a demo file for testing
+# Requirements:
+# - Create a sample file in the standard prefix
+# - Add a timestamp to the content to show when it was created
 
-    transition {
-      days          = var.days_to_glacier
-      storage_class = "GLACIER"
-    }
+# TODO: Create a second version of the demo file
+# Requirements:
+# - Use the same key as the demo file, but with updated content
+# - Make sure this depends on the first demo file
+# - This will demonstrate how versioning works
 
-    # Optional: Delete objects after 365 days
-    expiration {
-      days = var.days_to_expiration
-    }
-  }
+# TODO: Add a log file for testing
+# Requirements:
+# - Create a sample log file in the logs prefix
+# - This will help demonstrate the logs lifecycle rule
 
-  # Rule 3: Manage old versions
-  rule {
-    id     = "delete-old-versions"
-    status = "Enabled"
-
-    filter {
-      prefix = ""
-    }
-
-    # Delete non-current versions after 90 days
-    noncurrent_version_expiration {
-      noncurrent_days = var.days_to_delete_noncurrent
-    }
-
-    # Add a transition for non-current versions to Glacier after 30 days
-    noncurrent_version_transition {
-      noncurrent_days = 30
-      storage_class   = "GLACIER"
-    }
-  }
-
-  # Rule 4: Manage incomplete multipart uploads
-  rule {
-    id     = "abort-incomplete-multipart-uploads"
-    status = "Enabled"
-
-    filter {
-      prefix = ""
-    }
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 7
-    }
-  }
-
-  # Rule 5: Special configuration for logs
-  rule {
-    id     = "logs-management"
-    status = "Enabled"
-
-    filter {
-      prefix = var.logs_prefix
-    }
-
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
-    }
-
-    transition {
-      days          = 60
-      storage_class = "GLACIER"
-    }
-
-    expiration {
-      days = 180 # Delete logs after 180 days
-    }
-  }
-}
-
-# Create a bucket policy to deny non-HTTPS access
-resource "aws_s3_bucket_policy" "secure_transport" {
-  bucket = aws_s3_bucket.lifecycle_demo.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "DenyNonSecureTransport"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:*"
-        Resource = [
-          aws_s3_bucket.lifecycle_demo.arn,
-          "${aws_s3_bucket.lifecycle_demo.arn}/*"
-        ]
-        Condition = {
-          Bool = {
-            "aws:SecureTransport" = "false"
-          }
-        }
-      }
-    ]
-  })
-}
-
-# Optional: Create folders (prefixes) in the bucket
-resource "aws_s3_object" "standard_folder" {
-  bucket  = aws_s3_bucket.lifecycle_demo.id
-  key     = "${var.standard_prefix}/"
-  content = ""
-}
-
-resource "aws_s3_object" "logs_folder" {
-  bucket  = aws_s3_bucket.lifecycle_demo.id
-  key     = "${var.logs_prefix}/"
-  content = ""
-}
-
-resource "aws_s3_object" "archive_folder" {
-  bucket  = aws_s3_bucket.lifecycle_demo.id
-  key     = "${var.archive_prefix}/"
-  content = ""
-}
-
-# Create a custom demo file for testing
-resource "aws_s3_object" "demo_file" {
-  bucket  = aws_s3_bucket.lifecycle_demo.id
-  key     = "${var.standard_prefix}/demo-file.txt"
-  content = "This is a demo file to test S3 lifecycle rules. Created by Terraform on ${timestamp()}"
-}
-
-# Create different versions of the same file to demonstrate versioning
-resource "aws_s3_object" "demo_file_v2" {
-  bucket     = aws_s3_bucket.lifecycle_demo.id
-  key        = "${var.standard_prefix}/demo-file.txt"
-  content    = "This is version 2 of the demo file. Created by Terraform on ${timestamp()}"
-  depends_on = [aws_s3_object.demo_file]
-}
-
-# Add a log file to demonstrate lifecycle rules on logs
-resource "aws_s3_object" "log_file" {
-  bucket  = aws_s3_bucket.lifecycle_demo.id
-  key     = "${var.logs_prefix}/sample-log.txt"
-  content = "Sample log entry for testing lifecycle rules. Generated on ${timestamp()}"
-}
-
-# CloudWatch Event Rule to check for objects nearing transition
-resource "aws_cloudwatch_metric_alarm" "storage_metrics" {
-  alarm_name          = "s3-storage-metrics"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "BucketSizeBytes"
-  namespace           = "AWS/S3"
-  period              = 86400 # 1 day
-  statistic           = "Maximum"
-  threshold           = var.storage_threshold
-  alarm_description   = "Alarm when bucket size exceeds the threshold"
-
-  dimensions = {
-    BucketName  = aws_s3_bucket.lifecycle_demo.id
-    StorageType = "StandardStorage"
-  }
-} 
+# TODO: Set up a CloudWatch metric alarm
+# Requirements:
+# - Monitor the BucketSizeBytes metric
+# - Set appropriate alarm conditions (period, evaluation_periods, etc.)
+# - Set a threshold from var.storage_threshold

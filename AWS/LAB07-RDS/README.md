@@ -31,10 +31,11 @@ In this comprehensive lab, you'll use **Terraform** to provision an **Amazon RDS
 
 ```bash
 AWS/LAB07-RDS/
-├── main.tf          # Primary configuration for RDS and networking resources
+├── main.tf          # Primary configuration with TODO sections for students to implement
 ├── variables.tf     # Variable definitions for customization
 ├── outputs.tf       # Output values for connection details
 ├── terraform.tfvars # Variable values configuration
+├── solutions.md     # Solutions to the TODOs (for reference)
 └── README.md        # This documentation file
 ```
 
@@ -50,7 +51,38 @@ AWS/LAB07-RDS/
    - Set storage, instance class, and backup preferences
    - Specify your SSH key pair name (if creating a client instance)
 
-### 2. Deploy Your RDS Environment
+### 2. Complete the TODO Sections in main.tf
+
+The `main.tf` file contains several TODO sections that you need to implement:
+
+1. **VPC and Networking**
+   - Create a VPC with DNS support enabled
+   - Create subnets in different availability zones
+   - Configure Internet Gateway and route tables
+   - Set up route table associations
+
+2. **Security Groups**
+   - Create a security group for the RDS instance allowing MySQL traffic
+   - Create a security group for the client EC2 instance allowing SSH access
+
+3. **RDS Configuration**
+   - Create a DB subnet group spanning multiple availability zones
+   - Set up a custom parameter group for MySQL 8.0
+   - Configure an option group for additional database features
+
+4. **RDS Instance**
+   - Deploy an RDS MySQL instance with appropriate settings
+   - Configure backup retention, maintenance windows, and monitoring
+   - Enable encryption and logging features
+
+5. **Client Instance**
+   - Create an EC2 instance to connect to the database
+   - Configure user data script to install MySQL client and setup tools
+   - Create sample SQL scripts for testing
+
+Each TODO section includes specific requirements and hints to help you implement the solution.
+
+### 3. Deploy Your RDS Environment
 
 1. **Initialize Terraform**
    ```bash
@@ -72,7 +104,7 @@ AWS/LAB07-RDS/
    - Database name and connection details
    - Client instance public IP (if created)
 
-### 3. Connect to Your MySQL Database
+### 4. Connect to Your MySQL Database
 
 #### Option A: Using the Client Instance (If Created)
 
@@ -116,24 +148,34 @@ AWS/LAB07-RDS/
 
 ### VPC Configuration
 
-- **VPC**: Dedicated VPC for database resources
+The lab will have you create:
+- **VPC**: Dedicated VPC for database resources with DNS support
 - **Subnets**: Multiple subnets across availability zones for redundancy
 - **Route Tables**: Network routing configuration for database access
 - **Security Groups**: Firewall rules controlling access to the database
 
 ### RDS Configuration
 
-- **DB Instance**: MySQL 8.0 database server
-- **Parameter Group**: Custom MySQL configuration parameters
-- **Option Group**: Engine-specific options
+You'll need to implement:
+- **DB Instance**: MySQL 8.0 database server with appropriate settings
+- **Parameter Group**: Custom MySQL configuration parameters for optimization
+- **Option Group**: Engine-specific options for MySQL
 - **Subnet Group**: Specifies which subnets the database can use
 - **Security Configuration**: Network access controls and encryption settings
 
 ### Backup and Maintenance
 
-- **Automated Backups**: Daily backups with 7-day retention
+Your implementation should include:
+- **Automated Backups**: Daily backups with configurable retention
 - **Maintenance Window**: Scheduled time for updates and patches
-- **Point-in-Time Recovery**: Ability to restore to any point within the retention period
+- **Monitoring**: CloudWatch integration for database metrics
+
+### Client Instance
+
+If enabled, you'll create:
+- **EC2 Instance**: A MySQL client instance for connectivity testing
+- **Connection Scripts**: Automation scripts to connect to the database
+- **Sample Queries**: SQL scripts to test database functionality
 
 ---
 
@@ -199,9 +241,9 @@ Take your learning further by trying these advanced enhancements:
 
 After completing this lab, you'll understand how to:
 
-- Deploy and configure MySQL RDS instances using Terraform
-- Implement best practices for database security and performance
-- Set up proper networking for database access
-- Configure automated backups and maintenance
-- Test and validate database connectivity
-- Manage database resources through infrastructure as code
+- Design and implement a highly available database environment
+- Configure MySQL RDS instances with proper security and performance settings
+- Set up automated backup and maintenance strategies
+- Use Terraform to automate database infrastructure provisioning
+- Test and verify database connectivity and functionality
+- Apply database best practices in a cloud environment

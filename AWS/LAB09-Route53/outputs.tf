@@ -1,3 +1,7 @@
+# NOTE: These outputs reference resources that you need to implement in main.tf 
+# After completing all the TODOs in main.tf, these outputs will work correctly.
+# DO NOT modify this file until you've implemented the required resources.
+
 output "hosted_zone_id" {
   description = "ID of the created Route 53 hosted zone"
   value       = aws_route53_zone.main.zone_id
@@ -126,4 +130,4 @@ output "aws_cli_check_health" {
 output "aws_cli_list_records" {
   description = "AWS CLI command to list all records in the hosted zone"
   value       = "aws route53 list-resource-record-sets --hosted-zone-id ${aws_route53_zone.main.zone_id} --region ${var.region}"
-} 
+}

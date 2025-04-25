@@ -4,6 +4,8 @@
 
 In this comprehensive lab, you'll use **Terraform** to deploy a complete CloudWatch monitoring solution. You'll set up an EC2 instance with the CloudWatch agent, create log groups, configure metric filters, set up alarms, and build a custom dashboard to visualize all your monitoring data.
 
+This hands-on lab will guide you through the process of implementing a proper monitoring and alerting infrastructure using Infrastructure as Code (IaC) principles.
+
 ---
 
 ## 🎯 Objectives
@@ -30,10 +32,11 @@ In this comprehensive lab, you'll use **Terraform** to deploy a complete CloudWa
 
 ```bash
 AWS/LAB06-CLOUDWATCH/
-├── main.tf               # Primary Terraform configuration
+├── main.tf               # Primary Terraform configuration with TODO sections
 ├── variables.tf          # Variable definitions
 ├── outputs.tf            # Output values
 ├── terraform.tfvars      # Variable values
+├── solutions.md          # Solutions to the TODOs (for instructor reference)
 └── README.md             # This documentation
 ```
 
@@ -48,7 +51,37 @@ AWS/LAB06-CLOUDWATCH/
    - Configure your SSH key pair name
    - Optionally add your email address to receive alarm notifications
 
-### 2. Deploy Resources
+### 2. Complete the TODO Sections in main.tf
+
+The main.tf file contains several TODO sections that you need to implement:
+
+1. **IAM Setup**
+   - Create an IAM role for CloudWatch access 
+   - Attach the CloudWatch agent policy to the role
+   - Create an instance profile for the EC2 instance
+
+2. **CloudWatch Log Groups**
+   - Create log groups for web access logs, web error logs, and system logs
+   - Configure appropriate retention periods and tags
+
+3. **CloudWatch Metric Filters**
+   - Create metric filters to extract HTTP error metrics from logs
+   - Configure the pattern expressions for 404 and 5xx errors
+
+4. **SNS Setup**
+   - Create an SNS topic for alarm notifications
+   - Add an email subscription if an email is provided
+
+5. **CloudWatch Alarms**
+   - Create alarms for high CPU, memory, and disk usage
+   - Set up an alarm for HTTP 404 errors
+   - Configure appropriate thresholds and evaluation periods
+
+6. **CloudWatch Dashboard**
+   - Create a dashboard with multiple widgets
+   - Configure metrics and logs visualizations
+
+### 3. Deploy Resources
 
 1. **Initialize Terraform**
    ```bash
@@ -70,7 +103,7 @@ AWS/LAB06-CLOUDWATCH/
    - CloudWatch dashboard URL
    - Log group names
 
-### 3. Explore the CloudWatch Console
+### 4. Explore the CloudWatch Console
 
 1. **Navigate to CloudWatch in the AWS Console**
 2. **Explore log groups**
@@ -80,7 +113,7 @@ AWS/LAB06-CLOUDWATCH/
 3. **Check your dashboard**
    - View the custom dashboard with metrics and logs
 
-### 4. Test the CloudWatch Alarms
+### 5. Test the CloudWatch Alarms
 
 1. **Generate CPU load**
    - SSH into your EC2 instance:
@@ -106,37 +139,35 @@ AWS/LAB06-CLOUDWATCH/
 
 ---
 
-## 🔍 Key Components
+## 🔍 Key Components to Implement
+
+### IAM Role and Policies
+You'll need to create an IAM role that allows the EC2 instance to interact with CloudWatch services. The role needs to have the CloudWatchAgentServerPolicy attached to grant permission to send metrics and logs.
 
 ### CloudWatch Agent
-
-The lab deploys an EC2 instance with the CloudWatch agent configured to collect:
-
+The lab includes an EC2 instance with the CloudWatch agent pre-configured in the user data. The agent collects:
 - **System metrics**: CPU, memory, disk usage
 - **Log files**: Apache access and error logs, system messages
 
 ### Log Groups and Metric Filters
-
-Three log groups are created:
+You'll need to create three log groups:
 - `/aws/ec2/web/access` - Apache access logs
 - `/aws/ec2/web/error` - Apache error logs
 - `/aws/ec2/system` - System logs
 
-Metric filters extract metrics from logs, including:
+You'll also implement metric filters to extract metrics from logs, including:
 - HTTP 404 errors
 - HTTP 5xx errors
 
 ### Alarms
-
-The lab sets up CloudWatch alarms for:
+You'll configure CloudWatch alarms for:
 - High CPU utilization (> 80%)
 - High memory usage (> 80%)
 - High disk usage (> 80%)
 - HTTP error rate (> 5 errors per minute)
 
 ### Dashboard
-
-A comprehensive dashboard displays:
+You'll create a comprehensive dashboard that displays:
 - CPU, memory, and disk metrics
 - HTTP error counts
 - Latest web access logs

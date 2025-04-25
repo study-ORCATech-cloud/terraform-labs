@@ -2,268 +2,117 @@ provider "aws" {
   region = var.region
 }
 
-# Create a VPC for the RDS instance
-resource "aws_vpc" "rds_vpc" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  tags = {
-    Name = "rds-vpc"
-  }
-}
+# VPC and Networking
+# TODO: Create a VPC for the RDS instance
+# Requirements:
+# - Set CIDR block from var.vpc_cidr
+# - Enable DNS support and hostnames
+# - Add appropriate tags
+# HINT: Use the aws_vpc resource
 
-# Create subnets in different availability zones for high availability
-resource "aws_subnet" "rds_subnet_1" {
-  vpc_id            = aws_vpc.rds_vpc.id
-  cidr_block        = var.subnet_cidr_1
-  availability_zone = "${var.region}a"
-  tags = {
-    Name = "rds-subnet-1a"
-  }
-}
+# TODO: Create subnets in different availability zones for high availability
+# Requirements:
+# - Create two subnets in different AZs (${var.region}a and ${var.region}b)
+# - Use var.subnet_cidr_1 and var.subnet_cidr_2 for CIDR blocks
+# - Associate with the VPC you created
+# - Add appropriate tags
+# HINT: Use the aws_subnet resource
 
-resource "aws_subnet" "rds_subnet_2" {
-  vpc_id            = aws_vpc.rds_vpc.id
-  cidr_block        = var.subnet_cidr_2
-  availability_zone = "${var.region}b"
-  tags = {
-    Name = "rds-subnet-2b"
-  }
-}
+# TODO: Create an Internet Gateway
+# Requirements:
+# - Attach it to the VPC
+# - Add appropriate tags
+# HINT: Use the aws_internet_gateway resource
 
-# Create an Internet Gateway
-resource "aws_internet_gateway" "rds_igw" {
-  vpc_id = aws_vpc.rds_vpc.id
-  tags = {
-    Name = "rds-igw"
-  }
-}
+# TODO: Create a route table for public access
+# Requirements:
+# - Associate with the VPC
+# - Add a route for 0.0.0.0/0 pointing to the Internet Gateway
+# - Add appropriate tags
+# HINT: Use the aws_route_table resource with a route block
 
-# Create a route table for public access
-resource "aws_route_table" "rds_public_rt" {
-  vpc_id = aws_vpc.rds_vpc.id
+# TODO: Associate the route table with the subnets
+# Requirements:
+# - Associate the route table with both subnets
+# HINT: Use the aws_route_table_association resource
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.rds_igw.id
-  }
+# Security Groups
+# TODO: Create a security group for the RDS instance
+# Requirements:
+# - Name it "rds-security-group"
+# - Allow MySQL traffic (port 3306) from the CIDR range in var.allowed_cidr
+# - Allow all outbound traffic
+# - Add appropriate tags
+# HINT: Use the aws_security_group resource
 
-  tags = {
-    Name = "rds-public-rt"
-  }
-}
+# TODO: Create an EC2 security group for the client instance
+# Requirements:
+# - Name it "mysql-client-sg"
+# - Allow SSH access (port 22) from anywhere for this lab
+# - Allow all outbound traffic
+# - Add appropriate tags
+# HINT: Use the aws_security_group resource
 
-# Associate the route table with the subnets
-resource "aws_route_table_association" "rds_rta_1" {
-  subnet_id      = aws_subnet.rds_subnet_1.id
-  route_table_id = aws_route_table.rds_public_rt.id
-}
+# RDS Configuration
+# TODO: Create a DB subnet group
+# Requirements:
+# - Name it "rds-subnet-group"
+# - Include both subnets you created
+# - Add appropriate tags
+# HINT: Use the aws_db_subnet_group resource with subnet_ids
 
-resource "aws_route_table_association" "rds_rta_2" {
-  subnet_id      = aws_subnet.rds_subnet_2.id
-  route_table_id = aws_route_table.rds_public_rt.id
-}
+# TODO: Create a DB parameter group
+# Requirements:
+# - Name it "rds-mysql-params"
+# - Use the "mysql8.0" family
+# - Configure the following parameters:
+#   - character_set_server = "utf8mb4"
+#   - collation_server = "utf8mb4_general_ci"
+#   - max_connections = "150"
+#   - general_log = "1"
+# - Add appropriate tags
+# HINT: Use the aws_db_parameter_group resource with multiple parameter blocks
 
-# Create a security group for the RDS instance
-resource "aws_security_group" "rds_sg" {
-  name        = "rds-security-group"
-  description = "Allow MySQL traffic"
-  vpc_id      = aws_vpc.rds_vpc.id
+# TODO: Create an option group
+# Requirements:
+# - Name it "rds-mysql-options"
+# - Set it up for MySQL 8.0
+# - Add appropriate tags
+# HINT: Use the aws_db_option_group resource
 
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
-    description = "Allow MySQL traffic from specified CIDR"
-  }
+# TODO: Create the RDS instance
+# Requirements:
+# - Use var.db_identifier as the identifier
+# - Set up MySQL 8.0 as the engine
+# - Use var.db_instance_class for the instance class
+# - Configure allocated storage from var.allocated_storage with gp2 storage type
+# - Enable storage encryption
+# - Set database name, username, and password from variables
+# - Configure port 3306
+# - Set publicly_accessible from var.publicly_accessible
+# - Attach the security group you created
+# - Use the subnet group, parameter group, and option group created above
+# - Configure backups with retention period from var.backup_retention_period
+# - Set backup window to "03:00-04:00" and maintenance window to "Mon:04:00-Mon:05:00"
+# - Set multi_az from var.multi_az
+# - Set skip_final_snapshot to true for lab purposes
+# - Disable deletion protection for lab purposes
+# - Enable CloudWatch log exports for error, general, and slowquery logs
+# - Add appropriate tags
+# HINT: Use the aws_db_instance resource
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name = "rds-sg"
-  }
-}
-
-# Create an EC2 security group for the client instance
-resource "aws_security_group" "client_sg" {
-  name        = "mysql-client-sg"
-  description = "Security group for MySQL client"
-  vpc_id      = aws_vpc.rds_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow SSH access"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
-  tags = {
-    Name = "mysql-client-sg"
-  }
-}
-
-# Create a DB subnet group
-resource "aws_db_subnet_group" "rds_subnet_group" {
-  name        = "rds-subnet-group"
-  description = "RDS subnet group"
-  subnet_ids  = [aws_subnet.rds_subnet_1.id, aws_subnet.rds_subnet_2.id]
-
-  tags = {
-    Name = "RDS Subnet Group"
-  }
-}
-
-# Create a DB parameter group
-resource "aws_db_parameter_group" "rds_param_group" {
-  name        = "rds-mysql-params"
-  family      = "mysql8.0"
-  description = "Custom parameter group for MySQL 8.0"
-
-  parameter {
-    name  = "character_set_server"
-    value = "utf8mb4"
-  }
-
-  parameter {
-    name  = "collation_server"
-    value = "utf8mb4_general_ci"
-  }
-
-  parameter {
-    name  = "max_connections"
-    value = "150"
-  }
-
-  parameter {
-    name  = "general_log"
-    value = "1"
-  }
-
-  tags = {
-    Name = "RDS Parameter Group"
-  }
-}
-
-# Create an option group
-resource "aws_db_option_group" "rds_option_group" {
-  name                     = "rds-mysql-options"
-  option_group_description = "Option group for MySQL 8.0"
-  engine_name              = "mysql"
-  major_engine_version     = "8.0"
-
-  tags = {
-    Name = "RDS Option Group"
-  }
-}
-
-# Create the RDS instance
-resource "aws_db_instance" "mysql_db" {
-  identifier                      = var.db_identifier
-  engine                          = "mysql"
-  engine_version                  = "8.0"
-  instance_class                  = var.db_instance_class
-  allocated_storage               = var.allocated_storage
-  storage_type                    = "gp2"
-  storage_encrypted               = true
-  db_name                         = var.db_name
-  username                        = var.db_username
-  password                        = var.db_password
-  port                            = 3306
-  publicly_accessible             = var.publicly_accessible
-  vpc_security_group_ids          = [aws_security_group.rds_sg.id]
-  db_subnet_group_name            = aws_db_subnet_group.rds_subnet_group.name
-  parameter_group_name            = aws_db_parameter_group.rds_param_group.name
-  option_group_name               = aws_db_option_group.rds_option_group.name
-  backup_retention_period         = var.backup_retention_period
-  backup_window                   = "03:00-04:00"
-  maintenance_window              = "Mon:04:00-Mon:05:00"
-  multi_az                        = var.multi_az
-  skip_final_snapshot             = true
-  deletion_protection             = false
-  copy_tags_to_snapshot           = true
-  monitoring_interval             = 60
-  enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
-
-  tags = {
-    Name        = "MySQL-RDS-Instance"
-    Environment = "Lab"
-  }
-}
-
-# Create an EC2 instance to use as a MySQL client
-resource "aws_instance" "mysql_client" {
-  count                       = var.create_client_instance ? 1 : 0
-  ami                         = var.client_ami_id
-  instance_type               = "t2.micro"
-  subnet_id                   = aws_subnet.rds_subnet_1.id
-  vpc_security_group_ids      = [aws_security_group.client_sg.id]
-  key_name                    = var.key_name
-  associate_public_ip_address = true
-
-  user_data = <<-EOF
-#!/bin/bash
-yum update -y
-yum install -y mysql
-
-# Wait for the RDS instance to be available
-echo "Waiting for RDS instance to be available..."
-sleep 60
-
-# Store connection details in variables
-DB_HOST="${aws_db_instance.mysql_db.address}"
-DB_PORT="${aws_db_instance.mysql_db.port}"
-DB_USER="${var.db_username}"
-DB_PASS="${var.db_password}"
-DB_NAME="${var.db_name}"
-
-# Create a script to connect to the MySQL database
-cat > /home/ec2-user/connect-to-db.sh << SCRIPT
-#!/bin/bash
-mysql -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS $DB_NAME
-SCRIPT
-
-chmod +x /home/ec2-user/connect-to-db.sh
-chown ec2-user:ec2-user /home/ec2-user/connect-to-db.sh
-
-# Create a sample SQL script
-cat > /home/ec2-user/create-tables.sql << SQL
--- Sample database setup
-CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(100) NOT NULL,
-  email VARCHAR(100) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO users (username, email) 
-VALUES ('admin', 'admin@example.com'),
-       ('test_user', 'test@example.com');
-
-SELECT * FROM users;
-SQL
-
-chown ec2-user:ec2-user /home/ec2-user/create-tables.sql
-
-echo "MySQL client setup completed. Use the connect-to-db.sh script to connect to your RDS instance."
-EOF
-
-  tags = {
-    Name = "MySQL-Client-Instance"
-  }
-}
+# TODO: Create an EC2 instance to use as a MySQL client
+# Requirements:
+# - Only create if var.create_client_instance is true (use count)
+# - Use var.client_ami_id for the AMI
+# - Use t2.micro for the instance type
+# - Place it in the first subnet
+# - Attach the client security group
+# - Use var.key_name for SSH access
+# - Enable public IP association
+# - Add user data script that:
+#   - Installs MySQL client
+#   - Creates a connection script with the RDS endpoint details
+#   - Creates a sample SQL script to create tables
+# - Add appropriate tags
+# HINT: Use the aws_instance resource with count and heredoc for user_data

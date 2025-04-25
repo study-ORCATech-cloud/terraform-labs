@@ -2,200 +2,117 @@ provider "aws" {
   region = var.region
 }
 
-# Create a Route 53 public hosted zone for the domain
-resource "aws_route53_zone" "main" {
-  name    = var.domain_name
-  comment = "Managed by Terraform - Route 53 Lab"
+# TODO: Create a Route 53 public hosted zone for the domain
+# Requirements:
+# - Use the domain name from var.domain_name
+# - Add a comment about it being managed by Terraform
+# - Add appropriate tags (Environment, Name, Project)
 
-  tags = {
-    Environment = "Lab"
-    Name        = var.domain_name
-    Project     = "Terraform-Labs"
-  }
-}
+# TODO: Create a health check for the web server
+# Requirements:
+# - Target the web endpoint using var.web_endpoint
+# - Configure it for HTTP on port 80
+# - Check the root path "/"
+# - Set failure_threshold to 3
+# - Set request_interval to 30 seconds
+# - Add a Name tag
 
-# Create a health check for the web server
-resource "aws_route53_health_check" "web_health_check" {
-  fqdn              = var.web_endpoint
-  port              = 80
-  type              = "HTTP"
-  resource_path     = "/"
-  failure_threshold = 3
-  request_interval  = 30
+# TODO: Create an A record for the root domain
+# Requirements:
+# - Point it to the web IP using var.web_ip
+# - Set an appropriate TTL (300 seconds recommended)
+# - Use the zone_id from your hosted zone
 
-  tags = {
-    Name = "web-health-check"
-  }
-}
+# TODO: Create an A record for the "www" subdomain
+# Requirements:
+# - Point it to the same web IP using var.web_ip
+# - Set the same TTL as the root domain record
+# - Remember to construct the full subdomain name using the domain name
 
-# Create an A record for the root domain pointing to web_ip
-resource "aws_route53_record" "root_a" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = var.domain_name
-  type    = "A"
-  ttl     = 300
-  records = [var.web_ip]
-}
+# TODO: Create a CNAME record for "app" subdomain
+# Requirements:
+# - Point it to the web endpoint using var.web_endpoint
+# - Use a TTL of 300 seconds
+# - Remember that CNAME records point to another domain, not an IP
 
-# Create an A record for "www" subdomain pointing to web_ip
-resource "aws_route53_record" "www_a" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "www.${var.domain_name}"
-  type    = "A"
-  ttl     = 300
-  records = [var.web_ip]
-}
+# TODO: Create a health-checked A record for "api" subdomain as primary
+# Requirements:
+# - Configure it with failover routing policy as PRIMARY
+# - Associate it with the health check you created above
+# - Set an appropriate TTL
+# - Point to var.api_primary_ip
+# - Use a set_identifier to distinguish it from the secondary record
 
-# Create a CNAME record for "app" subdomain pointing to web_endpoint
-resource "aws_route53_record" "app_cname" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "app.${var.domain_name}"
-  type    = "CNAME"
-  ttl     = 300
-  records = [var.web_endpoint]
-}
+# TODO: Create a secondary failover record for "api" subdomain
+# Requirements:
+# - Configure it with failover routing policy as SECONDARY
+# - Set the same TTL as the primary record
+# - Point to var.api_secondary_ip
+# - Use a different set_identifier than the primary record
+# - No health check is needed for secondary records
 
-# Create a health-checked A record for "api" subdomain
-resource "aws_route53_record" "api_a" {
-  zone_id         = aws_route53_zone.main.zone_id
-  name            = "api.${var.domain_name}"
-  type            = "A"
-  set_identifier  = "primary"
-  health_check_id = aws_route53_health_check.web_health_check.id
+# TODO: Create MX records for email (if enabled)
+# Requirements:
+# - Only create this if var.create_mx_record is true (use count)
+# - Use TTL of 3600 seconds (1 hour)
+# - Add three priority mail servers with priorities 1, 5, and 10
+# - Use var.mx_server_primary, var.mx_server_secondary, and var.mx_server_tertiary
 
-  failover_routing_policy {
-    type = "PRIMARY"
-  }
+# TODO: Create TXT record for SPF (Sender Policy Framework)
+# Requirements:
+# - Only create this if var.create_spf_record is true (use count)
+# - Set TTL to 3600 seconds
+# - Use the format "v=spf1 include:${var.spf_include} ~all"
 
-  ttl     = 300
-  records = [var.api_primary_ip]
-}
+# TODO: Create DKIM record for email authentication
+# Requirements:
+# - Only create this if var.create_dkim_record is true (use count)
+# - Use a special name format: "${var.dkim_selector}._domainkey.${var.domain_name}"
+# - Set TTL to 3600 seconds
+# - Use var.dkim_value for the record value
 
-# Create a secondary failover record for "api" subdomain
-resource "aws_route53_record" "api_a_secondary" {
-  zone_id        = aws_route53_zone.main.zone_id
-  name           = "api.${var.domain_name}"
-  type           = "A"
-  set_identifier = "secondary"
+# TODO: Create CAA (Certificate Authority Authorization) record
+# Requirements:
+# - Allow only the specified CA from var.ca_allowed to issue certificates
+# - Set TTL to 3600 seconds
+# - Use the format "0 issue \"${var.ca_allowed}\""
 
-  failover_routing_policy {
-    type = "SECONDARY"
-  }
+# TODO: Create weighted routing for "test" subdomain (version A)
+# Requirements:
+# - Only create this if var.create_weighted_records is true (use count)
+# - Configure it with a weight of 80 (80% of traffic)
+# - Set TTL to 300 seconds
+# - Point to var.test_ip_a
+# - Use "version-a" as the set_identifier
 
-  ttl     = 300
-  records = [var.api_secondary_ip]
-}
+# TODO: Create weighted routing for "test" subdomain (version B)
+# Requirements:
+# - Only create this if var.create_weighted_records is true (use count)
+# - Configure it with a weight of 20 (20% of traffic)
+# - Set TTL to 300 seconds
+# - Point to var.test_ip_b
+# - Use "version-b" as the set_identifier
 
-# Create MX records for email (if enabled)
-resource "aws_route53_record" "mx" {
-  count   = var.create_mx_record ? 1 : 0
-  zone_id = aws_route53_zone.main.zone_id
-  name    = var.domain_name
-  type    = "MX"
-  ttl     = 3600
-  records = [
-    "1 ${var.mx_server_primary}",
-    "5 ${var.mx_server_secondary}",
-    "10 ${var.mx_server_tertiary}"
-  ]
-}
+# TODO: Create an alias record for an S3 website
+# Requirements:
+# - Only create this if var.create_s3_website_record is true (use count)
+# - Create a "static" subdomain
+# - Configure an alias pointing to var.s3_website_endpoint
+# - Use var.s3_website_hosted_zone_id for the zone_id in the alias configuration
+# - Set evaluate_target_health to false
 
-# Create TXT record for SPF (email sender policy framework)
-resource "aws_route53_record" "spf" {
-  count   = var.create_spf_record ? 1 : 0
-  zone_id = aws_route53_zone.main.zone_id
-  name    = var.domain_name
-  type    = "TXT"
-  ttl     = 3600
-  records = ["v=spf1 include:${var.spf_include} ~all"]
-}
+# TODO: Create an alias record for a CloudFront distribution
+# Requirements:
+# - Only create this if var.create_cloudfront_record is true (use count)
+# - Create a "cdn" subdomain
+# - Configure an alias pointing to var.cloudfront_domain_name
+# - Use var.cloudfront_hosted_zone_id for the zone_id
+# - Set evaluate_target_health to false
 
-# Create DKIM records for email authentication (if enabled)
-resource "aws_route53_record" "dkim" {
-  count   = var.create_dkim_record ? 1 : 0
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "${var.dkim_selector}._domainkey.${var.domain_name}"
-  type    = "TXT"
-  ttl     = 3600
-  records = [var.dkim_value]
-}
-
-# Create CAA (Certificate Authority Authorization) records
-resource "aws_route53_record" "caa" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = var.domain_name
-  type    = "CAA"
-  ttl     = 3600
-  records = [
-    "0 issue \"${var.ca_allowed}\""
-  ]
-}
-
-# Create weighted routing for "test" subdomain (A/B testing example)
-resource "aws_route53_record" "test_a" {
-  count          = var.create_weighted_records ? 1 : 0
-  zone_id        = aws_route53_zone.main.zone_id
-  name           = "test.${var.domain_name}"
-  type           = "A"
-  set_identifier = "version-a"
-
-  weighted_routing_policy {
-    weight = 80
-  }
-
-  ttl     = 300
-  records = [var.test_ip_a]
-}
-
-resource "aws_route53_record" "test_b" {
-  count          = var.create_weighted_records ? 1 : 0
-  zone_id        = aws_route53_zone.main.zone_id
-  name           = "test.${var.domain_name}"
-  type           = "A"
-  set_identifier = "version-b"
-
-  weighted_routing_policy {
-    weight = 20
-  }
-
-  ttl     = 300
-  records = [var.test_ip_b]
-}
-
-# Alias record for S3 website bucket (if enabled)
-resource "aws_route53_record" "s3_website" {
-  count   = var.create_s3_website_record ? 1 : 0
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "static.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = var.s3_website_endpoint
-    zone_id                = var.s3_website_hosted_zone_id
-    evaluate_target_health = false
-  }
-}
-
-# Alias record for CloudFront distribution (if enabled)
-resource "aws_route53_record" "cloudfront" {
-  count   = var.create_cloudfront_record ? 1 : 0
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "cdn.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = var.cloudfront_domain_name
-    zone_id                = var.cloudfront_hosted_zone_id
-    evaluate_target_health = false
-  }
-}
-
-# Create subdomain delegation to another hosted zone (if enabled)
-resource "aws_route53_record" "subdomain_delegation" {
-  count   = var.create_subdomain_delegation ? 1 : 0
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "${var.delegated_subdomain}.${var.domain_name}"
-  type    = "NS"
-  ttl     = 172800
-  records = var.delegated_nameservers
-} 
+# TODO: Create subdomain delegation to another hosted zone
+# Requirements:
+# - Only create this if var.create_subdomain_delegation is true (use count)
+# - Use NS record type
+# - Set TTL to 172800 seconds (48 hours)
+# - Use "${var.delegated_subdomain}.${var.domain_name}" for the name
+# - Use var.delegated_nameservers for the list of nameservers
