@@ -32,13 +32,11 @@ terraform-labs/
 │   ├── LAB02-Storage-Account/
 │   └── ...
 │
-├── GCP/                        # GCP Terraform labs
-│   ├── LAB01-Compute-Engine/
-│   ├── LAB02-Cloud-Storage/
-│   └── ...
-│
-└── Common/                     # Shared modules or documentation
-    └── Provider-Setup.md       # Setup instructions for each cloud
+└── GCP/                        # GCP Terraform labs
+    ├── LAB01-Compute-Engine/
+    ├── LAB02-Cloud-Storage/
+    └── ...
+
 ```
 
 Each lab folder includes:
