@@ -30,7 +30,11 @@ Azure/LAB10-Functions-HTTPTrigger/
 ├── variables.tf          # Runtime, region, function name
 ├── outputs.tf            # Function URL
 ├── terraform.tfvars      # Optional overrides
-├── function.zip          # Deployment package
+├── function-code/        # Function source code
+│   ├── function_app.py   # Python function (example)
+│   ├── host.json         # Function host configuration
+│   └── requirements.txt  # Python dependencies
+├── function.zip          # Deployment package (you'll create this)
 └── README.md             # This file
 ```
 
@@ -38,21 +42,35 @@ Azure/LAB10-Functions-HTTPTrigger/
 
 ## 🚀 Steps to Complete the Lab
 
-1. **Prepare your code and zip it**
+1. **Review the TODO Tasks in main.tf**
+
+   You'll need to implement the following resources:
+   - Resource Group for Function resources
+   - Storage Account for Function App
+   - Service Plan (Consumption plan)
+   - Application Insights (optional but recommended)
+   - Function App (Linux or Windows based on your preference)
+   - Function deployment using zip package
+
+2. **Prepare your code and zip it**
 ```bash
 cd function-code
 zip -r ../function.zip .
 ```
 
-2. **Initialize and apply Terraform**
+3. **Initialize and apply Terraform**
 ```bash
 terraform init
 terraform apply
 ```
 
-3. **Test function in browser or with curl**
+4. **Test function in browser or with curl**
 ```bash
+# For anonymous functions:
 curl $(terraform output -raw function_url)?name=Terraform
+
+# For functions with authentication:
+curl "$(terraform output -raw function_url)?code=<function_key>&name=Terraform"
 ```
 
 ---
@@ -71,6 +89,7 @@ Deletes the Function App, Storage, and Plan
 - **Function App**: Hosts the serverless code
 - **App Service Plan**: Required for consumption or premium tiers
 - **Zip Deploy**: Uploads and activates code via archive
+- **Function Authentication**: Control access with function keys or anonymous access
 
 ---
 
@@ -79,6 +98,8 @@ Deletes the Function App, Storage, and Plan
 - Add environment variables and application settings
 - Add authentication using Azure AD or function keys
 - Log output to Azure Monitor
+- Create a custom domain for your Function App
+- Implement VNet integration for your Function App
 
 ---
 
@@ -86,6 +107,7 @@ Deletes the Function App, Storage, and Plan
 
 - [Terraform Azure Function Docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/function_app)
 - [Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/)
+- [Python Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python)
 
 ---
 
