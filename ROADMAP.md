@@ -56,14 +56,22 @@ Each lab uses Terraform to provision the same cloud resources previously handled
 
 ---
 
-### 🔜 Planned Labs (Terraform Track Extensions)
+### ✅ Advanced AWS Labs
 
-#### AWS
 | Lab   | Title                             | Description                                            |
 |--------|----------------------------------|--------------------------------------------------------|
-| LAB11 | CloudFront Static Site            | Serve static content via CloudFront + S3              |
-| LAB12 | Athena Querying                   | Automate Athena setup for querying S3                 |
-| LAB13 | ECS Fargate Deployment            | Deploy containers using ECS and Fargate               |
+| LAB11 | CloudFront CDN                    | Deploy CloudFront distributions with S3 origins, OAI, custom error pages and geo-restrictions |
+| LAB12 | ECS with Fargate                  | Create containerized applications with ECS, ECR, Fargate and load balancing |
+| LAB13 | DynamoDB with DAX                 | Set up DynamoDB tables with DAX caching, global tables, and fine-grained access control |
+| LAB14 | EventBridge, SQS, and SNS         | Build event-driven architectures with event buses, queues, and notification services |
+| LAB15 | Cognito with API Gateway          | Implement secure authentication for APIs with Cognito, JWT validation and OAuth flows |
+| LAB16 | EKS Kubernetes                    | Deploy managed Kubernetes clusters with worker nodes, networking, storage, and Helm charts |
+| LAB17 | Aurora Serverless                 | Create serverless relational databases with auto-scaling, multi-AZ, and Data API access |
+| LAB18 | OpenSearch and Kibana             | Build search and analytics solutions with data ingestion pipelines and visualization dashboards |
+| LAB19 | Step Functions                    | Orchestrate complex workflows with state machines, error handling, and service integrations |
+| LAB20 | AppSync GraphQL API               | Create GraphQL APIs with multiple data sources, resolvers, and real-time subscriptions |
+
+### 🔜 Planned Labs (Terraform Track Extensions)
 
 #### Azure
 | Lab   | Title                             | Description                                            |
