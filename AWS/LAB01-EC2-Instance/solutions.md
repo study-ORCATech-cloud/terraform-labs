@@ -54,12 +54,30 @@ resource "aws_key_pair" "lab01_key_pair" {
 }
 ```
 
+### Solution: AMI Data Resource
+
+```hcl
+data "aws_ami" "linux2" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-kernel-5.10-hvm-*-x86_64-gp2"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+```
+
 ### Solution: EC2 Instance
 
 ```hcl
 # Create EC2 instance
 resource "aws_instance" "lab01_instance" {
-  ami                    = var.ami_id
+  ami                    = data.aws_ami.linux2.id
   instance_type          = var.instance_type
   key_name               = aws_key_pair.lab01_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.lab01_sg.id]
