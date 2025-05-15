@@ -3,9 +3,9 @@ aws_region          = "eu-west-1"
 environment         = "dev"
 bucket_name         = "my-unique-terraform-lab02-bucket"  # Change this to a globally unique name
 versioning_enabled  = true
+
+# Uncomment/Comment and modify these settings to enable/disable static website hosting
 allow_public_access = false
 enable_static_website = false
-
-# Uncomment and modify these settings to enable static website hosting
 # allow_public_access = true
 # enable_static_website = true
