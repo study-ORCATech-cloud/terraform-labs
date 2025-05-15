@@ -59,8 +59,9 @@ AWS/LAB01-EC2-Instance/
    # Check if you already have a key
    ls ~/.ssh/id_rsa.pub
    
-   # If not, generate a new key pair
-   ssh-keygen -t rsa -b 2048
+   # If not, generate a new key pair in the lab directory
+   cd AWS/LAB01-EC2-Instance
+   ssh-keygen -t rsa -b 2048 -f lab01-key -N ""
    ```
 
 ### Step 2: Initialize Terraform

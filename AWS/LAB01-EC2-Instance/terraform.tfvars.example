@@ -2,6 +2,5 @@
 aws_region      = "eu-west-1"
 environment     = "dev"
 instance_type   = "t2.micro"
-ami_id          = "ami-0fee4a8e734946f11"  # Amazon Linux 2 in eu-west-1
-key_name        = "my-key-pair"
-public_key_path = "~/.ssh/id_rsa.pub" 
+key_name        = "lab01-key-pair"
+public_key_path = "./lab01-key.pub" 
