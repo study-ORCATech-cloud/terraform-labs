@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 # TODO: Create an S3 bucket with versioning and lifecycle rules
 # Requirements:
 # - Use the bucket name from var.bucket_name 

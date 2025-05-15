@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.aws_region
-}
-
 # TODO: Create an S3 bucket
 # Requirements:
 # - Use the bucket_name variable for the bucket name

@@ -1,10 +1,3 @@
-provider "aws" {
-  region = var.aws_region
-
-  # Optional: you can add profile and other provider settings here
-  # profile = "default" 
-}
-
 # TODO: Create a security group in the default VPC
 # Requirements:
 # - Name it "lab01-security-group" with description "Allow SSH and HTTP"

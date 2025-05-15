@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 # Security Group for the ALB
 # TODO: Create a security group for the Application Load Balancer
 # Requirements:

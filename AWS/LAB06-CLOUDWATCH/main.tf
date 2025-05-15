@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 # Create a VPC for the lab
 resource "aws_vpc" "cloudwatch_lab_vpc" {
   cidr_block           = var.vpc_cidr

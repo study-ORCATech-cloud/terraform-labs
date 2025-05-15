@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 # VPC and Networking
 # TODO: Create a VPC for the RDS instance
 # Requirements:
