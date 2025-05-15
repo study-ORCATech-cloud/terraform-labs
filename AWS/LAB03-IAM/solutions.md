@@ -247,9 +247,10 @@ resource "aws_iam_role" "cross_account_role" {
       {
         Effect = "Allow"
         Action = "sts:AssumeRole"
-        Principal = {
-          AWS = var.trusted_account_id != null ? "arn:aws:iam::${var.trusted_account_id}:root" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
+        # Uncomment `Principal` section if you provided `trusted_account_id`
+        # Principal = {
+        #   AWS = var.trusted_account_id != null ? "arn:aws:iam::${var.trusted_account_id}:root" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        # }
         Condition = {
           StringEquals = {
             "aws:PrincipalTag/Environment" = var.environment
