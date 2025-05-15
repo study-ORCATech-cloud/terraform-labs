@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 # TODO: Create a Route 53 public hosted zone for the domain
 # Requirements:
 # - Use the domain name from var.domain_name
