@@ -6,7 +6,7 @@ In this comprehensive lab, you'll use **Terraform** to provision an **Amazon RDS
 
 ---
 
-## 🎯 Objectives
+## 🎯 Learning Objectives
 
 - Create a VPC with multiple subnets for RDS high availability
 - Configure security groups and network access controls
@@ -27,223 +27,489 @@ In this comprehensive lab, you'll use **Terraform** to provision an **Amazon RDS
 
 ---
 
-## 📁 File Structure
+## 📁 Files Structure
 
-```bash
+```
 AWS/LAB07-RDS/
-├── main.tf          # Primary configuration with TODO sections for students to implement
-├── variables.tf     # Variable definitions for customization
-├── outputs.tf       # Output values for connection details
-├── terraform.tfvars # Variable values configuration
-├── solutions.md     # Solutions to the TODOs (for reference)
-└── README.md        # This documentation file
+├── main.tf                  # Primary configuration with TODO sections for students to implement
+├── variables.tf             # Variable definitions for customization
+├── outputs.tf               # Output values for connection details
+├── providers.tf             # AWS provider configuration
+├── terraform.tfvars.example # Sample variable values (rename to terraform.tfvars to use)
+├── solutions.md             # Solutions to the TODOs (for reference)
+└── README.md                # This documentation file
 ```
 
 ---
 
-## 🚀 Steps to Complete the Lab
+## 🌐 RDS Architecture
 
-### 1. Prepare Your Environment
+This lab implements a database architecture with the following components:
 
-1. **Review and customize the terraform.tfvars file**
-   - Set your preferred region (default: eu-west-1)
-   - Configure your database credentials
-   - Set storage, instance class, and backup preferences
-   - Specify your SSH key pair name (if creating a client instance)
+1. **VPC**: A dedicated virtual private cloud with DNS settings enabled
+2. **Subnets**: Two subnets in different availability zones for high availability
+3. **Internet Gateway**: Provides internet access for the client instance
+4. **Route Tables**: Control traffic flow between subnets and the internet
+5. **Security Groups**: Control access to both the RDS instance and client EC2
+6. **DB Subnet Group**: Defines which subnets RDS can use
+7. **Parameter Group**: Custom MySQL configuration settings
+8. **Option Group**: Engine-specific options for MySQL
+9. **RDS Instance**: MySQL 8.0 database with encryption, backups, and monitoring
+10. **Client Instance**: Optional EC2 instance to test database connectivity
 
-### 2. Complete the TODO Sections in main.tf
+All of these resources are deployed with proper security settings and best practices.
 
-The `main.tf` file contains several TODO sections that you need to implement:
+---
 
-1. **VPC and Networking**
-   - Create a VPC with DNS support enabled
-   - Create subnets in different availability zones
-   - Configure Internet Gateway and route tables
-   - Set up route table associations
+## 🚀 Lab Steps
 
-2. **Security Groups**
-   - Create a security group for the RDS instance allowing MySQL traffic
-   - Create a security group for the client EC2 instance allowing SSH access
+### Step 1: Prepare Your Environment
 
-3. **RDS Configuration**
-   - Create a DB subnet group spanning multiple availability zones
-   - Set up a custom parameter group for MySQL 8.0
-   - Configure an option group for additional database features
+1. Ensure AWS CLI is configured:
+   ```bash
+   aws configure
+   # OR use environment variables:
+   # export AWS_ACCESS_KEY_ID="your_access_key"
+   # export AWS_SECRET_ACCESS_KEY="your_secret_key"
+   # export AWS_DEFAULT_REGION="eu-west-1"
+   ```
 
-4. **RDS Instance**
-   - Deploy an RDS MySQL instance with appropriate settings
-   - Configure backup retention, maintenance windows, and monitoring
-   - Enable encryption and logging features
+### Step 2: Initialize Terraform
 
-5. **Client Instance**
-   - Create an EC2 instance to connect to the database
-   - Configure user data script to install MySQL client and setup tools
-   - Create sample SQL scripts for testing
+1. Navigate to the lab directory:
+   ```bash
+   cd AWS/LAB07-RDS
+   ```
 
-Each TODO section includes specific requirements and hints to help you implement the solution.
-
-### 3. Deploy Your RDS Environment
-
-1. **Initialize Terraform**
+2. Initialize Terraform to download provider plugins:
    ```bash
    terraform init
    ```
 
-2. **Review the deployment plan**
+### Step 3: Configure RDS Settings
+
+1. Create a `terraform.tfvars` file by copying the example:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+2. Customize the configuration in `terraform.tfvars` to adjust:
+   - VPC and subnet CIDR blocks
+   - Database identifiers, credentials, and instance class
+   - Storage settings and backup preferences
+   - Multi-AZ and public accessibility options
+   - Client instance creation settings
+
+   > ⚠️ **Important**: For this lab, we use simple credentials, but in production environments, use strong passwords and restrict access.
+
+### Step 4: Complete the TODO Sections
+
+This lab contains several TODO sections in main.tf and outputs.tf that you need to complete:
+
+1. In `main.tf`:
+
+   a. **VPC and Networking**
+      - Create a VPC with DNS support enabled
+      - Create subnets in different availability zones
+      - Configure Internet Gateway and route tables
+      - Set up route table associations
+
+   b. **Security Groups**
+      - Create a security group for the RDS instance 
+      - Create a security group for the client EC2 instance
+
+   c. **RDS Configuration**
+      - Create a DB subnet group spanning multiple availability zones
+      - Set up a custom parameter group for MySQL 8.0
+      - Configure an option group for additional database features
+
+   d. **RDS Instance**
+      - Deploy an RDS MySQL instance with appropriate settings
+      - Configure backup retention, maintenance windows, and monitoring
+      - Enable encryption and logging features
+
+   e. **Client Instance**
+      - Create an EC2 instance to connect to the database
+      - Configure user data script to install MySQL client
+
+2. In `outputs.tf`:
+   - Define outputs for RDS endpoint, port, and credentials
+   - Output subnet group and parameter group information
+   - Create conditional outputs for client instance details
+   - Define a connection string output for easy database access
+
+### Step 5: Review the Execution Plan
+
+1. Generate and review an execution plan:
    ```bash
    terraform plan
    ```
 
-3. **Apply the configuration**
+2. The plan will show the resources to be created:
+   - VPC with DNS settings enabled
+   - Subnets in different availability zones
+   - Internet Gateway and route tables
+   - Security groups with appropriate rules
+   - DB subnet group and parameter group
+   - RDS MySQL instance with all configurations
+   - Client EC2 instance (if enabled)
+
+### Step 6: Apply the Configuration
+
+1. Apply the Terraform configuration:
    ```bash
    terraform apply
    ```
 
-4. **Record the outputs**
+2. Type `yes` when prompted to confirm
+
+3. After successful application, Terraform will display outputs including:
    - RDS endpoint and port
    - Database name and connection details
    - Client instance public IP (if created)
 
-### 4. Connect to Your MySQL Database
+### Step 7: Test Database Connectivity
 
 #### Option A: Using the Client Instance (If Created)
 
-1. **SSH into the client instance**
+1. SSH into the client instance:
    ```bash
-   ssh -i your-key.pem ec2-user@<client_instance_public_ip>
+   ssh -i your-key.pem ec2-user@$(terraform output -raw client_instance_public_ip)
    ```
 
-2. **Use the pre-configured connection script**
+2. Use the pre-configured connection script:
    ```bash
    ./connect-to-db.sh
    ```
 
-3. **Run the sample SQL script**
-   ```bash
-   mysql -h <rds_endpoint> -P 3306 -u admin -p labdb < create-tables.sql
+3. Run some test SQL queries:
+   ```sql
+   SHOW DATABASES;
+   CREATE DATABASE test;
+   USE test;
+   CREATE TABLE sample (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100));
+   INSERT INTO sample (name) VALUES ('Test Record');
+   SELECT * FROM sample;
    ```
 
 #### Option B: Using a Local MySQL Client
 
-1. **Install a MySQL client on your local machine**
-   - For Windows: MySQL Workbench or command-line client
-   - For macOS: `brew install mysql-client`
-   - For Linux: `apt-get install mysql-client` or equivalent
+1. Install a MySQL client on your local machine if needed.
 
-2. **Connect to your RDS instance**
+2. Use the connection string from the output:
    ```bash
-   mysql -h <rds_endpoint> -P 3306 -u admin -p labdb
-   ```
-
-3. **Create a test table and insert data**
-   ```sql
-   CREATE TABLE test_table (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100));
-   INSERT INTO test_table (name) VALUES ('Test Record');
-   SELECT * FROM test_table;
+   $(terraform output -raw connection_string)
+   # When prompted, enter the password
    ```
 
 ---
 
-## 🔍 Key Components
+## 🔍 Understanding the RDS Architecture
 
-### VPC Configuration
+### Database Architecture Diagram
 
-The lab will have you create:
-- **VPC**: Dedicated VPC for database resources with DNS support
-- **Subnets**: Multiple subnets across availability zones for redundancy
-- **Route Tables**: Network routing configuration for database access
-- **Security Groups**: Firewall rules controlling access to the database
+```
+                                   Internet
+                                      |
+                                      | 
+                               Internet Gateway
+                                      |
+                                      |
++---------------------------------------------------------------------+
+|                                  VPC                                 |
+|                                                                     |
+|  +---------------------+            +---------------------+         |
+|  |                     |            |                     |         |
+|  |    Public Subnet    |            |    Public Subnet    |         |
+|  |    10.0.1.0/24      |            |    10.0.2.0/24      |         |
+|  |    (eu-west-1a)     |            |    (eu-west-1b)     |         |
+|  |                     |            |                     |         |
+|  +----------+----------+            +----------+----------+         |
+|             |                                  |                    |
+|             |                                  |                    |
+|             |      +--------------------+      |                    |
+|             |      |                    |      |                    |
+|             +----->|  Client Instance   |<-----+                    |
+|                    |  (MySQL Client)    |                           |
+|                    |                    |                           |
+|                    +--------------------+                           |
+|                              |                                      |
+|                              |                                      |
+|                              v                                      |
+|            +----------------------------------------+               |
+|            |            Security Group              |               |
+|            |                                        |               |
+|            +----------------------------------------+               |
+|                              |                                      |
+|                              v                                      |
+|  +---------------------+    |     +---------------------+          |
+|  |                     |    |     |                     |          |
+|  |     DB Subnet       |<---+---->|     DB Subnet       |          |
+|  | (DB Subnet Group)   |          | (DB Subnet Group)   |          |
+|  |                     |          |                     |          |
+|  +----------+----------+          +----------+----------+          |
+|             |                                |                     |
+|             |                                |                     |
+|             |     +--------------------+     |                     |
+|             |     |                    |     |                     |
+|             +---->| RDS MySQL Instance |<----+                     |
+|                   |   (Primary/Replica)|                           |
+|                   |                    |                           |
+|                   +--------------------+                           |
+|                                                                    |
++--------------------------------------------------------------------+
+```
 
-### RDS Configuration
+### Key Components Explained
 
-You'll need to implement:
-- **DB Instance**: MySQL 8.0 database server with appropriate settings
-- **Parameter Group**: Custom MySQL configuration parameters for optimization
-- **Option Group**: Engine-specific options for MySQL
-- **Subnet Group**: Specifies which subnets the database can use
-- **Security Configuration**: Network access controls and encryption settings
+1. **VPC**: A logically isolated network with a defined CIDR block
+   ```hcl
+   resource "aws_vpc" "rds_vpc" {
+     cidr_block           = var.vpc_cidr
+     enable_dns_support   = true
+     enable_dns_hostnames = true
+     # Tags...
+   }
+   ```
 
-### Backup and Maintenance
+2. **Subnets**: Subdivisions of the VPC CIDR block in different AZs
+   ```hcl
+   resource "aws_subnet" "rds_subnet_1" {
+     vpc_id            = aws_vpc.rds_vpc.id
+     cidr_block        = var.subnet_cidr_1
+     availability_zone = "${var.aws_region}a"
+     # Tags...
+   }
+   ```
 
-Your implementation should include:
-- **Automated Backups**: Daily backups with configurable retention
-- **Maintenance Window**: Scheduled time for updates and patches
-- **Monitoring**: CloudWatch integration for database metrics
+3. **Security Groups**: Control traffic to and from the RDS instance
+   ```hcl
+   resource "aws_security_group" "rds_sg" {
+     vpc_id = aws_vpc.rds_vpc.id
+     
+     ingress {
+       from_port   = 3306
+       to_port     = 3306
+       protocol    = "tcp"
+       cidr_blocks = [var.allowed_cidr]
+     }
+     # Egress rules and tags...
+   }
+   ```
 
-### Client Instance
+4. **DB Subnet Group**: A collection of subnets for database high availability
+   ```hcl
+   resource "aws_db_subnet_group" "rds_subnet_group" {
+     name        = "${var.name_prefix}-rds-subnet-group"
+     subnet_ids  = [aws_subnet.rds_subnet_1.id, aws_subnet.rds_subnet_2.id]
+     # Tags...
+   }
+   ```
 
-If enabled, you'll create:
-- **EC2 Instance**: A MySQL client instance for connectivity testing
-- **Connection Scripts**: Automation scripts to connect to the database
-- **Sample Queries**: SQL scripts to test database functionality
+5. **Parameter Group**: Custom configuration for MySQL database
+   ```hcl
+   resource "aws_db_parameter_group" "rds_param_group" {
+     name   = "${var.name_prefix}-rds-mysql-params"
+     family = "mysql8.0"
+     
+     parameter {
+       name  = "character_set_server"
+       value = "utf8mb4"
+     }
+     # Other parameters and tags...
+   }
+   ```
+
+6. **RDS Instance**: The actual MySQL database server
+   ```hcl
+   resource "aws_db_instance" "mysql_db" {
+     identifier              = "${var.name_prefix}-${var.db_identifier}"
+     engine                  = "mysql"
+     engine_version          = "8.0"
+     instance_class          = var.db_instance_class
+     allocated_storage       = var.allocated_storage
+     storage_type            = "gp2"
+     storage_encrypted       = true
+     # Other configuration settings...
+   }
+   ```
 
 ---
 
-## 🚨 Security Considerations
+## 💡 Key Learning Points
 
-- The lab uses default credentials for simplicity. In a production environment:
-  - Use strong, unique passwords
-  - Restrict network access to specific IP ranges or VPCs
-  - Enable encryption for data at rest and in transit
-  - Consider using AWS Secrets Manager for credential management
-  - Use IAM authentication for database access
+1. **Database Design Principles**:
+   - Multi-AZ deployment for high availability
+   - Subnet isolation for database security
+   - Parameter groups for database customization
+   - Backup and recovery strategy implementation
+
+2. **RDS Configuration Concepts**:
+   - Choosing appropriate instance classes and storage
+   - Configuring maintenance windows and backup retention
+   - Setting up database parameter groups
+   - Implementing encryption for data at rest
+
+3. **Terraform Techniques**:
+   - Conditional resource creation with count
+   - User data scripts for EC2 instance configuration
+   - Resource dependencies in database deployments
+   - Creating and managing sensitive outputs
+
+4. **AWS Database Best Practices**:
+   - Using private subnets for database instances
+   - Configuring proper security groups and access controls
+   - Setting up automated backups and maintenance
+   - Implementing database logging and monitoring
+
+---
+
+## 🧪 Challenge Exercises
+
+Ready to learn more? Try these extensions:
+
+1. **Enable Multi-AZ Deployment**:
+   Change the configuration to enable high availability with a standby replica
+   ```hcl
+   resource "aws_db_instance" "mysql_db" {
+     # Existing configuration...
+     multi_az = true
+   }
+   ```
+
+2. **Add Read Replicas**:
+   Create a read replica for scaling read operations
+   ```hcl
+   resource "aws_db_instance" "read_replica" {
+     replicate_source_db = aws_db_instance.mysql_db.id
+     instance_class      = var.db_instance_class
+     publicly_accessible = false
+     skip_final_snapshot = true
+     parameter_group_name = aws_db_parameter_group.rds_param_group.name
+     # Other settings...
+   }
+   ```
+
+3. **Implement Enhanced Monitoring**:
+   Enable detailed monitoring for your RDS instance
+   ```hcl
+   resource "aws_db_instance" "mysql_db" {
+     # Existing configuration...
+     monitoring_interval = 30
+     monitoring_role_arn = aws_iam_role.rds_monitoring_role.arn
+   }
+   
+   resource "aws_iam_role" "rds_monitoring_role" {
+     name = "${var.name_prefix}-rds-monitoring-role"
+     assume_role_policy = jsonencode({
+       Version = "2012-10-17"
+       Statement = [{
+         Action = "sts:AssumeRole"
+         Effect = "Allow"
+         Principal = {
+           Service = "monitoring.rds.amazonaws.com"
+         }
+       }]
+     })
+   }
+   ```
 
 ---
 
 ## 🧼 Cleanup
 
-When you've completed the lab, destroy all resources to avoid incurring additional costs:
+To avoid ongoing charges for the resources created in this lab:
 
-```bash
-terraform destroy
-```
+1. First, check for any dependent resources that might be using the RDS instance:
+   ```bash
+   # If you created any snapshots
+   aws rds describe-db-snapshots --db-instance-identifier $(terraform output -raw rds_db_identifier)
+   
+   # If you created any read replicas
+   aws rds describe-db-instances --query "DBInstances[?ReadReplicaSourceDBInstanceIdentifier=='$(terraform output -raw rds_db_identifier)']"
+   ```
 
-**Note**: This will delete the RDS instance and all associated data. Make sure you've exported any important data before running this command.
+2. When ready, destroy the infrastructure:
+   ```bash
+   terraform destroy
+   ```
+
+3. Type `yes` when prompted to confirm.
+
+4. Verify that all resources have been deleted:
+   ```bash
+   # Check if the RDS instance still exists
+   aws rds describe-db-instances --db-instance-identifier $(terraform output -raw rds_db_identifier) 2>/dev/null || echo "RDS instance has been deleted"
+   
+   # Check if the VPC still exists
+   aws ec2 describe-vpcs --vpc-id $(terraform output -raw rds_vpc_id) 2>/dev/null || echo "VPC has been deleted"
+   ```
+
+5. Clean up local files (optional):
+   ```bash
+   # Remove Terraform state files and other generated files
+   rm -rf .terraform* terraform.tfstate* terraform.tfvars
+   ```
+
+> ⚠️ **Important Note**: RDS instances continue to incur costs until they are completely deleted. Make sure to finish the destroy process even if it takes some time.
 
 ---
 
-## 💡 Advanced Extensions
+## 🚫 Common Errors and Troubleshooting
 
-Take your learning further by trying these advanced enhancements:
+1. **DB Instance Already Exists**:
+   ```
+   Error: Error creating DB Instance: DBInstanceAlreadyExists
+   ```
+   **Solution**: Choose a different identifier or wait for the previous instance to be fully deleted (which can take up to 10 minutes).
 
-1. **Enable Multi-AZ Deployment**
-   - Set `multi_az = true` in terraform.tfvars for high availability
+2. **Insufficient Instance Capacity**:
+   ```
+   Error: Error creating DB Instance: InsufficientDBInstanceCapacity
+   ```
+   **Solution**: Choose a different instance class or a different Availability Zone.
 
-2. **Configure Enhanced Monitoring**
-   - Decrease the monitoring interval for more frequent metrics
-   - Add CloudWatch alarms for key performance indicators
+3. **Parameter Group Not Found**:
+   ```
+   Error: Error modifying DB Instance: DBParameterGroupNotFound
+   ```
+   **Solution**: Ensure the parameter group is created before the RDS instance or check name typos.
 
-3. **Implement Performance Insights**
-   - Enable performance insights to analyze database performance
-   - Create custom dashboards for monitoring
+4. **Subnet Group Error**:
+   ```
+   Error: Error creating DB Instance: DBSubnetGroupDoesNotCoverEnoughAZs
+   ```
+   **Solution**: Ensure your subnet group has subnets in at least two different Availability Zones.
 
-4. **Add Read Replicas**
-   - Create read replicas for scaling read operations
-   - Test load balancing between primary and replica instances
+5. **Connectivity Issues**:
+   ```
+   ERROR 2003 (HY000): Can't connect to MySQL server
+   ```
+   **Solution**: Check security groups, route tables, and network ACLs. Ensure the client has the correct endpoint.
 
-5. **Implement IAM Authentication**
-   - Configure IAM database authentication
-   - Use IAM roles instead of password authentication
+6. **Password Issues**:
+   ```
+   Access denied for user 'admin'@'%' (using password: YES)
+   ```
+   **Solution**: Verify the password in terraform.tfvars matches what you're using to connect.
 
 ---
 
-## 📚 References
+## 📚 Additional Resources
 
-- [Amazon RDS Documentation](https://docs.aws.amazon.com/rds/index.html)
-- [MySQL 8.0 Documentation](https://dev.mysql.com/doc/refman/8.0/en/)
+- [Amazon RDS User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html)
+- [RDS for MySQL Documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html)
 - [Terraform AWS Provider - RDS Resources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance)
-- [RDS Parameter Group Reference](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.MySQL.Parameters.html)
+- [MySQL 8.0 Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/)
 - [AWS Database Blog](https://aws.amazon.com/blogs/database/)
+- [RDS Parameter Group Reference](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.MySQL.Parameters.html)
 
 ---
 
-## ✅ Key Takeaways
+## 🚀 Next Lab
 
-After completing this lab, you'll understand how to:
+Proceed to [LAB08-S3-Lifecycle](../LAB08-S3-Lifecycle/) to learn how to implement storage lifecycle management and versioning policies with Amazon S3.
 
-- Design and implement a highly available database environment
-- Configure MySQL RDS instances with proper security and performance settings
-- Set up automated backup and maintenance strategies
-- Use Terraform to automate database infrastructure provisioning
-- Test and verify database connectivity and functionality
-- Apply database best practices in a cloud environment
+---
+
+Happy Terraforming!

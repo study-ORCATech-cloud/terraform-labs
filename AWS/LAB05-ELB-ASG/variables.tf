@@ -1,7 +1,19 @@
-variable "region" {
+variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
   default     = "eu-west-1"
+}
+
+variable "environment" {
+  description = "Environment name for tagging resources"
+  type        = string
+  default     = "dev"
+}
+
+variable "name_prefix" {
+  description = "Prefix to be used for resource names"
+  type        = string
+  default     = "lab05"
 }
 
 variable "vpc_id" {
@@ -53,4 +65,28 @@ variable "desired_capacity" {
   description = "Desired capacity of the Auto Scaling Group"
   type        = number
   default     = 2
-} 
+}
+
+variable "scale_out_threshold" {
+  description = "CPU utilization threshold for scaling out"
+  type        = number
+  default     = 70
+}
+
+variable "scale_in_threshold" {
+  description = "CPU utilization threshold for scaling in"
+  type        = number
+  default     = 30
+}
+
+variable "evaluation_periods" {
+  description = "Number of evaluation periods for CloudWatch alarms"
+  type        = number
+  default     = 2
+}
+
+variable "metric_period" {
+  description = "Period in seconds for CloudWatch metrics evaluation"
+  type        = number
+  default     = 120
+}

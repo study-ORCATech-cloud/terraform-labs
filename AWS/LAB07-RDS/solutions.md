@@ -11,7 +11,10 @@ resource "aws_vpc" "rds_vpc" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "rds-vpc"
+    Name        = "${var.name_prefix}-rds-vpc"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
@@ -19,18 +22,24 @@ resource "aws_vpc" "rds_vpc" {
 resource "aws_subnet" "rds_subnet_1" {
   vpc_id            = aws_vpc.rds_vpc.id
   cidr_block        = var.subnet_cidr_1
-  availability_zone = "${var.region}a"
+  availability_zone = "${var.aws_region}a"
   tags = {
-    Name = "rds-subnet-1a"
+    Name        = "${var.name_prefix}-rds-subnet-1a"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
 resource "aws_subnet" "rds_subnet_2" {
   vpc_id            = aws_vpc.rds_vpc.id
   cidr_block        = var.subnet_cidr_2
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.aws_region}b"
   tags = {
-    Name = "rds-subnet-2b"
+    Name        = "${var.name_prefix}-rds-subnet-2b"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
@@ -38,7 +47,10 @@ resource "aws_subnet" "rds_subnet_2" {
 resource "aws_internet_gateway" "rds_igw" {
   vpc_id = aws_vpc.rds_vpc.id
   tags = {
-    Name = "rds-igw"
+    Name        = "${var.name_prefix}-rds-igw"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
@@ -52,7 +64,10 @@ resource "aws_route_table" "rds_public_rt" {
   }
 
   tags = {
-    Name = "rds-public-rt"
+    Name        = "${var.name_prefix}-rds-public-rt"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
@@ -73,7 +88,7 @@ resource "aws_route_table_association" "rds_rta_2" {
 ```hcl
 # Create a security group for the RDS instance
 resource "aws_security_group" "rds_sg" {
-  name        = "rds-security-group"
+  name        = "${var.name_prefix}-rds-sg"
   description = "Allow MySQL traffic"
   vpc_id      = aws_vpc.rds_vpc.id
 
@@ -94,13 +109,16 @@ resource "aws_security_group" "rds_sg" {
   }
 
   tags = {
-    Name = "rds-sg"
+    Name        = "${var.name_prefix}-rds-sg"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
 # Create an EC2 security group for the client instance
 resource "aws_security_group" "client_sg" {
-  name        = "mysql-client-sg"
+  name        = "${var.name_prefix}-mysql-client-sg"
   description = "Security group for MySQL client"
   vpc_id      = aws_vpc.rds_vpc.id
 
@@ -121,7 +139,10 @@ resource "aws_security_group" "client_sg" {
   }
 
   tags = {
-    Name = "mysql-client-sg"
+    Name        = "${var.name_prefix}-mysql-client-sg"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 ```
@@ -131,18 +152,21 @@ resource "aws_security_group" "client_sg" {
 ```hcl
 # Create a DB subnet group
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name        = "rds-subnet-group"
+  name        = "${var.name_prefix}-rds-subnet-group"
   description = "RDS subnet group"
   subnet_ids  = [aws_subnet.rds_subnet_1.id, aws_subnet.rds_subnet_2.id]
 
   tags = {
-    Name = "RDS Subnet Group"
+    Name        = "${var.name_prefix}-rds-subnet-group"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
 # Create a DB parameter group
 resource "aws_db_parameter_group" "rds_param_group" {
-  name        = "rds-mysql-params"
+  name        = "${var.name_prefix}-rds-mysql-params"
   family      = "mysql8.0"
   description = "Custom parameter group for MySQL 8.0"
 
@@ -167,19 +191,25 @@ resource "aws_db_parameter_group" "rds_param_group" {
   }
 
   tags = {
-    Name = "RDS Parameter Group"
+    Name        = "${var.name_prefix}-rds-param-group"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 
 # Create an option group
 resource "aws_db_option_group" "rds_option_group" {
-  name                     = "rds-mysql-options"
+  name                     = "${var.name_prefix}-rds-mysql-options"
   option_group_description = "Option group for MySQL 8.0"
   engine_name              = "mysql"
   major_engine_version     = "8.0"
 
   tags = {
-    Name = "RDS Option Group"
+    Name        = "${var.name_prefix}-rds-option-group"
+    Environment = var.environment
+    Lab         = "LAB07-RDS"
+    Terraform   = "true"
   }
 }
 ```
@@ -189,7 +219,7 @@ resource "aws_db_option_group" "rds_option_group" {
 ```hcl
 # Create the RDS instance
 resource "aws_db_instance" "mysql_db" {
-  identifier                      = var.db_identifier
+  identifier                      = "${var.name_prefix}-${var.db_identifier}"
   engine                          = "mysql"
   engine_version                  = "8.0"
   instance_class                  = var.db_instance_class

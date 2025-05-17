@@ -6,14 +6,15 @@ In this comprehensive lab, you'll use **Terraform** to build a complete serverle
 
 ---
 
-## 🎯 Objectives
+## 🎯 Learning Objectives
 
 - Create a serverless Lambda function with proper IAM execution roles
-- Configure API Gateway REST API with resources, methods, and integrations
-- Set up request/response mapping and validation
+- Configure API Gateway HTTP API with routes and integrations
+- Implement various HTTP methods (GET, POST, PUT, DELETE)
+- Set up CORS for cross-origin access
 - Deploy the API to a stage with proper logging and monitoring
 - Implement error handling and proper HTTP response codes
-- Test the API endpoint using various HTTP methods
+- Test the API endpoints with curl commands
 
 ---
 
@@ -23,334 +24,487 @@ In this comprehensive lab, you'll use **Terraform** to build a complete serverle
 - Terraform v1.3+ installed locally
 - AWS CLI configured with valid credentials
 - Basic understanding of REST APIs and HTTP methods
-- `zip` utility installed for packaging Lambda functions
-- Code editor for working with function source code
+- Knowledge of Python (for understanding the Lambda function code)
 
 ---
 
-## 📁 File Structure
+## 📁 Files Structure
 
-```bash
+```
 AWS/LAB10-Lambda/
-├── main.tf               # Lambda, IAM, API Gateway configuration
-├── variables.tf          # Variable definitions for customization
-├── outputs.tf            # Output values (API URL, function ARN)
-├── terraform.tfvars      # Variable values configuration
-├── lambda/               # Lambda function source code
-│   ├── index.js          # Sample Node.js function handler
-│   └── main.py           # Sample Python function handler
-└── README.md             # This documentation file
+├── main.tf                  # Lambda, IAM, API Gateway resources with TODOs
+├── variables.tf             # Variable definitions for customization
+├── outputs.tf               # Output definitions with TODOs
+├── providers.tf             # AWS provider configuration
+├── terraform.tfvars.example # Sample variable values (rename to terraform.tfvars to use)
+├── lambda/                  # Lambda function source code
+│   └── main.py              # Python handler implementing the API endpoints
+├── solutions.md             # Solutions to the TODOs (for reference)
+└── README.md                # This documentation file
 ```
 
 ---
 
-## 🔄 AWS Services Used
+## 🌐 Serverless API Architecture
 
-| Service | Purpose in this Lab |
-|---------|---------------------|
-| **AWS Lambda** | Serverless compute service that runs your code in response to events |
-| **API Gateway** | Fully managed service to create, publish, and secure APIs |
-| **IAM** | Identity and Access Management for Lambda execution roles |
-| **CloudWatch Logs** | Automatic logging of Lambda function execution |
-| **CloudWatch Metrics** | Performance monitoring for Lambda and API Gateway |
+This lab implements a serverless API with the following components:
+
+1. **API Gateway HTTP API**: Handles HTTP requests from clients
+2. **Lambda Function**: Processes API requests and returns responses
+3. **IAM Role & Policies**: Grants Lambda necessary permissions
+4. **CloudWatch Logs**: Captures Lambda execution logs
+5. **CORS Configuration**: Enables cross-origin resource sharing
+
+These components work together to create a fully serverless solution without managing any servers.
 
 ---
 
-## 🚀 Steps to Complete the Lab
+## 🚀 Lab Steps
 
-### 1. Prepare the Lambda Function
+### Step 1: Prepare Your Environment
 
-1. **Choose a runtime**
-   - This lab provides examples for Node.js and Python
-   - Select one based on your preference by updating `terraform.tfvars`
-
-2. **Review the function code**
-   - Examine the handler code in the `lambda/` directory
-   - The code implements a simple API that handles different HTTP methods
-
-3. **Package the function**
+1. Ensure AWS CLI is configured:
    ```bash
-   # For Python
-   cd lambda && zip ../function.zip main.py && cd ..
+   aws configure
+   # OR use environment variables:
+   # export AWS_ACCESS_KEY_ID="your_access_key"
+   # export AWS_SECRET_ACCESS_KEY="your_secret_key"
+   # export AWS_DEFAULT_REGION="eu-west-1"
    ```
 
-### 2. Deploy the Infrastructure
+### Step 2: Initialize Terraform
 
-1. **Initialize Terraform**
+1. Navigate to the lab directory:
+   ```bash
+   cd AWS/LAB10-Lambda
+   ```
+
+2. Initialize Terraform to download provider plugins:
    ```bash
    terraform init
    ```
 
-2. **Review the deployment plan**
+### Step 3: Configure Lambda and API Gateway Settings
+
+1. Create a `terraform.tfvars` file by copying the example:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+2. Customize the configuration in `terraform.tfvars` to adjust:
+   - Lambda function name, memory, and timeout
+   - API Gateway name and throttling settings
+   - CORS configuration for cross-origin access
+   - Environment variables for Lambda
+   - Resource tags
+
+### Step 4: Complete the TODO Sections
+
+This lab contains several TODO sections in main.tf and outputs.tf that you need to complete:
+
+1. In `main.tf`:
+
+   a. **IAM Role Configuration**
+      - Create an IAM role for the Lambda function
+      - Configure assume role policy for Lambda
+      - Attach the basic execution policy
+
+   b. **Lambda Function Setup**
+      - Create an archive of the Lambda function code
+      - Create the Lambda function with appropriate settings
+      - Configure memory, timeout, and environment variables
+
+   c. **API Gateway Configuration**
+      - Create an HTTP API Gateway
+      - Configure CORS settings
+      - Set up an API stage with deployment options
+      - Configure throttling limits
+
+   d. **Integrations and Routes**
+      - Create a Lambda integration for the API Gateway
+      - Define routes for different HTTP methods
+      - Set up permissions for API Gateway to invoke Lambda
+
+2. In `outputs.tf`:
+   - Define outputs for Lambda function information
+   - Create outputs for API Gateway endpoints
+   - Set up example curl commands for testing
+
+### Step 5: Review the Execution Plan
+
+1. Generate and review an execution plan:
    ```bash
    terraform plan
    ```
 
-3. **Apply the configuration**
+2. The plan will show the resources to be created:
+   - IAM role and policy attachments
+   - Lambda function with your configuration
+   - API Gateway with routes and integrations
+   - Lambda permissions for API Gateway
+
+### Step 6: Apply the Configuration
+
+1. Apply the Terraform configuration:
    ```bash
    terraform apply
    ```
 
-4. **Note the outputs**
-   - API URL for testing
-   - Function ARN for reference
-   - CloudWatch log group for monitoring
+2. Type `yes` when prompted to confirm
 
-### 3. Test the API Endpoint
+3. After successful application, Terraform will display outputs including:
+   - Lambda function name and ARN
+   - API Gateway endpoint URLs
+   - Example curl commands for testing
 
-1. **Test with curl**
+### Step 7: Test the API Endpoints
+
+1. Test the `/hello` endpoint:
    ```bash
-   # GET request
-   curl $(terraform output -raw api_url)
+   # Use the command from the curl_test_commands output
+   curl -X GET "$(terraform output -raw api_hello_endpoint)"
    
-   # POST request with data
-   curl -X POST -H "Content-Type: application/json" \
-     -d '{"message":"Hello Serverless"}' \
-     $(terraform output -raw api_url)
+   # With a query parameter
+   curl -X GET "$(terraform output -raw api_hello_endpoint)?name=YourName"
    ```
 
-2. **Test in browser**
-   - Open the API URL in a web browser for GET requests
-   - Observe the response
-
-3. **Monitor CloudWatch logs**
+2. Test the `/info` endpoint:
    ```bash
-   aws logs get-log-events \
-     --log-group-name "/aws/lambda/$(terraform output -raw function_name)" \
-     --log-stream-name=$(aws logs describe-log-streams \
-       --log-group-name "/aws/lambda/$(terraform output -raw function_name)" \
-       --query "logStreams[0].logStreamName" \
-       --output text)
+   curl -X GET "$(terraform output -raw api_info_endpoint)"
+   ```
+
+3. Test the `/items` endpoints:
+   ```bash
+   # Create an item (POST)
+   curl -X POST -H "Content-Type: application/json" \
+     -d '{"name": "Test Item", "description": "A test item"}' \
+     "$(terraform output -raw api_items_endpoint)"
+   
+   # Update an item (PUT) - Replace "item-id" with an actual ID from a previous POST
+   curl -X PUT -H "Content-Type: application/json" \
+     -d '{"name": "Updated Item", "status": "active"}' \
+     "$(terraform output -raw api_items_endpoint)/item-id"
+   
+   # Delete an item (DELETE) - Replace "item-id" with an actual ID
+   curl -X DELETE "$(terraform output -raw api_items_endpoint)/item-id"
+   ```
+
+### Step 8: View CloudWatch Logs
+
+1. Check the Lambda function logs in CloudWatch:
+   ```bash
+   aws logs tail "$(terraform output -raw cloudwatch_log_group)" --follow
+   ```
+
+2. Or navigate to the CloudWatch Logs console:
+   - Go to AWS CloudWatch console
+   - Navigate to Log Groups
+   - Find the log group for your Lambda function
+   - Examine the log streams for detailed execution information
+
+---
+
+## 🔍 Understanding Serverless Architecture
+
+### Serverless Request Flow Diagram
+
+```
+                                                 +------------------+
+                                                 |                  |
+                                                 |   AWS Account    |
+                                                 |                  |
+          +------------+        Request          +------------------+
+          |            | -----------------------> |                  |
+          |   Client   |                          |  API Gateway    |
+          |            | <----------------------- |  (HTTP API)     |
+          +------------+        Response          |                  |
+              ^                                   +--------+----+---+
+              |                                            |
+              |                                            |
+              |                                            | Invoke
+              |                                            v
+              |                                   +--------+--------+
+              |                                   |                 |
+              |                                   | Lambda Function |
+              |                                   |                 |
+              |                                   |  +-------------+|
+              |                                   |  |             ||
+   API Endpoints:                                 |  |  main.py    ||
+   - GET /hello                                   |  |  def handler ||
+   - GET /info                                    |  |   ...       ||
+   - POST /items                                  |  +-------------+|
+   - PUT /items/{itemId}                          |                 |
+   - DELETE /items/{itemId}                       +-+------+--------+
+                                                    |      |
+                                                    |      |
+                                                    |      | Permissions
+                                                    v      v
+                                                  +-+------+--------+
+                                                  |                 |
+                                                  |    IAM Role     |
+                                                  |                 |
+                                                  +---------+-------+
+                                                            |
+                                                            | Write logs
+                                                            v
+                                                  +---------+-------+
+                                                  |                 |
+                                                  |   CloudWatch    |
+                                                  |     Logs        |
+                                                  |                 |
+                                                  +-----------------+
+```
+
+### Key Components Explained
+
+1. **Lambda Function**: The serverless compute service that processes requests
+   ```hcl
+   resource "aws_lambda_function" "api_lambda" {
+     function_name = var.lambda_function_name
+     role          = aws_iam_role.lambda_role.arn
+     handler       = "main.handler"
+     runtime       = var.lambda_runtime
+     timeout       = var.lambda_timeout
+     memory_size   = var.lambda_memory_size
+     # Additional settings...
+   }
+   ```
+
+2. **IAM Role**: Provides permissions for Lambda to access AWS services
+   ```hcl
+   resource "aws_iam_role" "lambda_role" {
+     name = "${var.lambda_function_name}-role"
+     assume_role_policy = jsonencode({
+       Version = "2012-10-17"
+       Statement = [{
+         Action = "sts:AssumeRole"
+         Effect = "Allow"
+         Principal = {
+           Service = "lambda.amazonaws.com"
+         }
+       }]
+     })
+     # Tags...
+   }
+   ```
+
+3. **API Gateway HTTP API**: Creates a RESTful API that invokes Lambda
+   ```hcl
+   resource "aws_apigatewayv2_api" "lambda_api" {
+     name          = var.api_gateway_name
+     protocol_type = "HTTP"
+     cors_configuration {
+       allow_origins = var.cors_allow_origins
+       allow_methods = var.cors_allow_methods
+       allow_headers = var.cors_allow_headers
+       max_age       = var.cors_max_age
+     }
+     # Tags...
+   }
+   ```
+
+4. **API Gateway Integration**: Links API Gateway to Lambda
+   ```hcl
+   resource "aws_apigatewayv2_integration" "lambda_integration" {
+     api_id             = aws_apigatewayv2_api.lambda_api.id
+     integration_type   = "AWS_PROXY"
+     integration_uri    = aws_lambda_function.api_lambda.invoke_arn
+     integration_method = "POST"
+     payload_format_version = "2.0"
+   }
+   ```
+
+5. **Lambda Permission**: Allows API Gateway to invoke Lambda
+   ```hcl
+   resource "aws_lambda_permission" "api_gateway_permission" {
+     statement_id  = "AllowExecutionFromAPIGateway"
+     action        = "lambda:InvokeFunction"
+     function_name = aws_lambda_function.api_lambda.function_name
+     principal     = "apigateway.amazonaws.com"
+     source_arn    = "${aws_apigatewayv2_api.lambda_api.execution_arn}/*/*"
+   }
    ```
 
 ---
 
-## 🔧 Understanding the Architecture
+## 💡 Key Learning Points
 
-### Lambda Function
+1. **Serverless Computing Principles**:
+   - Running code without managing servers
+   - Pay-per-use billing model (only charged for execution time)
+   - Automatic scaling to handle variable workloads
+   - Built-in high availability and fault tolerance
+   - Event-driven architecture with various triggers
 
-The Lambda function serves as the backend logic for your API. When deployed:
+2. **API Development Concepts**:
+   - RESTful API design and implementation
+   - HTTP methods (GET, POST, PUT, DELETE) for different operations
+   - Request/response handling and status codes
+   - Path and query parameters for data retrieval
+   - Request body parsing for data submission
 
-1. The function runs in an isolated environment (execution context)
-2. It receives an event object containing request details
-3. It processes the request and returns a response
-4. AWS automatically handles scaling based on incoming requests
+3. **Terraform Techniques**:
+   - Managing serverless resources with infrastructure as code
+   - Configuring IAM permissions with least privilege
+   - Using data sources for file processing
+   - Setting up integrations between AWS services
+   - Managing environment variables and configuration
 
-### API Gateway
-
-API Gateway creates a RESTful API that:
-
-1. Accepts HTTP requests from clients
-2. Transforms and validates those requests
-3. Passes them to the Lambda function
-4. Returns the function's response to the client
-5. Handles authentication, throttling, and caching
-
-### CORS Configuration
-
-The API Gateway is configured with Cross-Origin Resource Sharing (CORS) settings that:
-
-1. Define which origins can access your API
-2. Specify allowed HTTP methods
-3. Set allowed headers for the requests
-4. Configure caching duration for preflight requests
-
-These settings are fully customizable via the following variables:
-- `cors_allow_origins` - List of allowed origins (e.g., `["*"]` for all origins)
-- `cors_allow_methods` - List of allowed HTTP methods
-- `cors_allow_headers` - List of allowed HTTP headers
-- `cors_max_age` - Duration in seconds for browsers to cache preflight responses
-
-### IAM Role
-
-The created IAM role:
-
-1. Provides Lambda with permissions to execute
-2. Enables logging to CloudWatch
-3. Enforces the principle of least privilege
-
-### Environment Variables
-
-The Lambda function has access to environment variables that control its behavior:
-
-1. **environment** - Identifies the deployment environment (e.g., "production", "dev")
-2. **LOG_LEVEL** - Controls the verbosity of logging (e.g., "debug", "info")
+4. **Security Best Practices**:
+   - Using IAM roles with least privilege
+   - Implementing CORS for secure cross-origin access
+   - Configuring throttling to prevent abuse
+   - Proper error handling to avoid information leakage
+   - Setting timeouts and memory limits appropriately
 
 ---
 
-## 📈 Monitoring and Logging
+## 🧪 Challenge Exercises
 
-Your serverless API automatically includes:
+Ready to learn more? Try these extensions:
 
-1. **CloudWatch Logs**
-   - All Lambda function output and errors
-   - API Gateway access logs (if enabled)
+1. **Add API Key Authentication**:
+   Implement API key authentication for your endpoints
+   ```hcl
+   resource "aws_apigatewayv2_api_key" "api_key" {
+     name = "my-api-key"
+   }
+   
+   resource "aws_apigatewayv2_usage_plan" "usage_plan" {
+     name = "standard-plan"
+     api_stages {
+       api_id = aws_apigatewayv2_api.lambda_api.id
+       stage  = aws_apigatewayv2_stage.lambda_stage.name
+     }
+   }
+   
+   resource "aws_apigatewayv2_usage_plan_key" "usage_plan_key" {
+     key_id        = aws_apigatewayv2_api_key.api_key.id
+     key_type      = "API_KEY"
+     usage_plan_id = aws_apigatewayv2_usage_plan.usage_plan.id
+   }
+   ```
 
-2. **CloudWatch Metrics**
-   - Invocation count and duration
-   - Error rates and throttling
-   - API latency and request counts
+2. **Add DynamoDB Integration**:
+   Connect your Lambda function to a DynamoDB table for persistent storage
+   ```hcl
+   resource "aws_dynamodb_table" "items_table" {
+     name           = "items"
+     billing_mode   = "PAY_PER_REQUEST"
+     hash_key       = "id"
+     
+     attribute {
+       name = "id"
+       type = "S"
+     }
+   }
+   ```
 
-Access logs in CloudWatch by navigating to the log group or using the AWS CLI:
-
-```bash
-aws logs tail "/aws/lambda/$(terraform output -raw function_name)" --follow
-```
+3. **Implement Custom Domain Name**:
+   Add a custom domain with an SSL certificate
+   ```hcl
+   resource "aws_apigatewayv2_domain_name" "custom_domain" {
+     domain_name = "api.example.com"
+     
+     domain_name_configuration {
+       certificate_arn = aws_acm_certificate.api_cert.arn
+       endpoint_type   = "REGIONAL"
+       security_policy = "TLS_1_2"
+     }
+   }
+   ```
 
 ---
 
 ## 🧼 Cleanup
 
-To avoid incurring unnecessary charges, clean up all resources when finished:
+To avoid ongoing charges for the resources created in this lab:
 
-```bash
-terraform destroy
-```
+1. Remove all resources with Terraform:
+   ```bash
+   terraform destroy
+   ```
 
-This will remove:
-- Lambda function and associated IAM role
-- API Gateway REST API and deployment
-- CloudWatch Log groups
+2. Type `yes` when prompted to confirm.
 
-**Note**: Cleanup is immediate, but some CloudWatch Logs may persist for a retention period.
+3. Verify that all resources have been deleted:
+   ```bash
+   # Check if Lambda function exists
+   aws lambda get-function --function-name $(terraform output -raw lambda_function_name) 2>&1 || echo "Lambda function has been deleted"
+   
+   # Check if API Gateway exists
+   aws apigatewayv2 get-api --api-id $(terraform output -raw api_gateway_id) 2>&1 || echo "API Gateway has been deleted"
+   
+   # Check if CloudWatch Log Group exists
+   aws logs describe-log-groups --log-group-name-prefix $(terraform output -raw cloudwatch_log_group) --query 'logGroups[*].logGroupName' --output text | grep -q "^$(terraform output -raw cloudwatch_log_group)$" || echo "Log group has been deleted"
+   ```
 
----
+4. Clean up local files (optional):
+   ```bash
+   # Remove Terraform state files and other generated files
+   rm -rf .terraform* terraform.tfstate* terraform.tfvars lambda_function.zip
+   ```
 
-## 💡 Key Concepts
-
-### Serverless Computing Model
-
-- **No Server Management**: AWS handles all infrastructure
-- **Auto-scaling**: Capacity scales automatically with demand
-- **Pay-per-use**: Charged only for compute time used
-- **Event-driven**: Functions execute in response to events
-
-### API Gateway Components
-
-- **Resources**: URL paths in your API
-- **Methods**: HTTP verbs (GET, POST, etc.)
-- **Integrations**: Connections to backend services
-- **Stages**: Deployments of your API (dev, prod, etc.)
-- **API Keys**: For client authentication and quota management
-
-### Lambda Concepts
-
-- **Handler**: Function entry point
-- **Event**: Input data structure
-- **Context**: Runtime information object
-- **Cold Start**: Initial initialization delay
-- **Execution Environment**: Isolated runtime container
+> ⚠️ **Important Note**: Even though Lambda functions and API Gateway only charge for usage, it's still good practice to clean up resources to avoid any unexpected charges and keep your AWS account clean.
 
 ---
 
-## 🔧 Customizing the Deployment
+## 🚫 Common Errors and Troubleshooting
 
-This Terraform configuration is designed to be highly customizable through variables. You can tailor the deployment to your specific needs by adjusting the values in `terraform.tfvars`:
+1. **Lambda Execution Role Issues**:
+   ```
+   Error: Error creating Lambda function: InvalidParameterValueException: The role defined for the function cannot be assumed by Lambda.
+   ```
+   **Solution**: Ensure the Lambda execution role has the correct trust relationship with Lambda service.
 
-### Lambda Configuration
+2. **Lambda Deployment Package Too Large**:
+   ```
+   Error: Error creating Lambda function: InvalidParameterValueException: Unzipped size must be smaller than...
+   ```
+   **Solution**: Reduce package size by removing unnecessary dependencies or files.
 
-- `lambda_function_name` - Name of your Lambda function
-- `lambda_memory_size` - Memory allocation in MB (128MB to 10,240MB)
-- `lambda_timeout` - Maximum execution time in seconds (up to 900s)
-- `lambda_runtime` - Runtime environment (e.g., "nodejs18.x", "python3.9")
-- `lambda_environment_variables` - Environment variables passed to the function
+3. **API Gateway Integration Issues**:
+   ```
+   Error: Error creating API Gateway v2 integration: BadRequestException: Integrations must be invocable
+   ```
+   **Solution**: Make sure the Lambda ARN is correct and the permission to invoke Lambda is set up properly.
 
-### API Gateway Configuration
+4. **CORS Configuration Problems**:
+   ```
+   Access to XMLHttpRequest at 'your-api-url' from origin 'http://localhost:3000' has been blocked by CORS policy
+   ```
+   **Solution**: Check that CORS is properly configured in the API Gateway and that your origins, methods, and headers are correctly specified.
 
-- `api_gateway_name` - Name of your API Gateway
-- `api_gateway_stage_name` - Deployment stage name (e.g., "prod", "dev", "test")
-- `api_throttling_burst_limit` - Maximum API request burst size
-- `api_throttling_rate_limit` - Steady-state requests per second
+5. **Lambda Permission Issues**:
+   ```
+   Error: Lambda was not able to write to CloudWatch Logs
+   ```
+   **Solution**: Ensure the Lambda execution role has the AWSLambdaBasicExecutionRole policy attached.
 
-### CORS Configuration
-
-- `cors_allow_origins` - List of allowed origins
-- `cors_allow_methods` - List of allowed HTTP methods
-- `cors_allow_headers` - List of allowed HTTP headers
-- `cors_max_age` - Duration in seconds for preflight caching
-
-### Example Configuration
-
-```hcl
-# terraform.tfvars
-region                   = "eu-west-1"
-lambda_function_name     = "api-handler"
-lambda_memory_size       = 256
-lambda_timeout           = 30
-lambda_runtime           = "python3.9"
-api_gateway_name         = "api-gateway"
-api_gateway_stage_name   = "prod"
-api_throttling_burst_limit = 10
-api_throttling_rate_limit  = 5
-
-lambda_environment_variables = {
-  environment = "production"
-  LOG_LEVEL   = "info"
-}
-
-cors_allow_origins = ["*"]
-cors_allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-cors_allow_headers = ["Content-Type", "Authorization", "X-Api-Key"]
-cors_max_age       = 300
-
-tags = {
-  Environment = "production"
-  Project     = "ServerlessAPI"
-  Terraform   = "true"
-  Owner       = "DevOps"
-}
-```
+6. **API Gateway Stage Deployment Issues**:
+   ```
+   Error: Not Found status code when accessing the API endpoint
+   ```
+   **Solution**: Verify the API Gateway stage is properly deployed and auto_deploy is set to true.
 
 ---
 
-## 🧪 Advanced Extensions
-
-Take your serverless knowledge further with these challenges:
-
-1. **Add Authentication**
-   - Implement API key authentication in API Gateway
-   - Configure AWS Cognito user pools for OAuth2
-
-2. **Enhance Request Handling**
-   - Add request validation with JSON Schema
-   - Create response models for structured data
-
-3. **Optimize Performance**
-   - Configure Lambda provisioned concurrency
-   - Implement API Gateway caching
-
-4. **Implement Custom Domain**
-   - Register a domain in Route 53
-   - Configure custom domain name for API Gateway
-   - Set up TLS certificate with AWS Certificate Manager
-
-5. **Advanced Logging**
-   - Enable API Gateway access logging
-   - Implement structured logging in Lambda function
-   - Create CloudWatch dashboards and alarms
-
----
-
-## 📚 References
+## 📚 Additional Resources
 
 - [AWS Lambda Developer Guide](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
-- [API Gateway Developer Guide](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
+- [Amazon API Gateway Developer Guide](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
 - [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [Serverless Best Practices](https://docs.aws.amazon.com/lambda/latest/operatorguide/serverless-bp.html)
 - [AWS Serverless Application Model (SAM)](https://aws.amazon.com/serverless/sam/)
-- [API Gateway Mapping Template Reference](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html)
+- [Serverless Framework](https://www.serverless.com/)
+- [AWS Lambda Best Practices](https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
+- [API Gateway REST API vs HTTP API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html)
 
 ---
 
-## ✅ Key Takeaways
+## 🚀 Next Lab
 
-After completing this lab, you'll understand how to:
+Proceed to [LAB11-CloudFront-CDN](../LAB11-CloudFront-CDN/) to learn how to set up a content delivery network (CDN) for optimizing content delivery globally using Amazon CloudFront.
 
-- Build serverless applications using infrastructure as code
-- Configure secure API endpoints with proper authentication
-- Manage infrastructure and application code together
-- Implement a cost-effective, scalable application architecture
-- Monitor and troubleshoot serverless applications
-- Apply best practices for serverless development
+---
 
-This serverless architecture pattern forms the foundation for modern cloud-native applications, enabling rapid development and deployment without managing traditional server infrastructure.
+Happy Terraforming!

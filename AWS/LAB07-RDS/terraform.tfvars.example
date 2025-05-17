@@ -1,0 +1,26 @@
+# Copy this file to terraform.tfvars and edit as needed
+aws_region                = "eu-west-1"
+environment               = "dev"
+name_prefix               = "lab07"
+
+# VPC and Networking Configuration
+vpc_cidr                  = "10.0.0.0/16"
+subnet_cidr_1             = "10.0.1.0/24"  # First subnet (AZ a)
+subnet_cidr_2             = "10.0.2.0/24"  # Second subnet (AZ b)
+allowed_cidr              = "0.0.0.0/0"    # Should be restricted in production
+
+# Database Configuration
+db_identifier             = "mysql-lab-instance"
+db_name                   = "labdb"
+db_username               = "admin"         # Change in production
+db_password               = "Password123!"  # Change in production
+db_instance_class         = "db.t3.micro"
+allocated_storage         = 20
+backup_retention_period   = 7
+multi_az                  = false
+publicly_accessible       = false
+
+# Client Instance Configuration (for testing)
+create_client_instance    = true
+client_ami_id             = "ami-0694d931cee996bbb"  # Amazon Linux 2 AMI in eu-west-1
+key_name                  = null  # Set to your SSH key name to access the client 

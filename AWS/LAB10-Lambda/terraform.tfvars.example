@@ -1,0 +1,43 @@
+# Copy this file to terraform.tfvars and modify the values as needed
+aws_region                = "eu-west-1"
+
+# Lambda Function Configuration
+lambda_function_name      = "api-lambda-function"  # Name of the Lambda function
+lambda_memory_size        = 128                    # Memory size for the Lambda function in MB
+lambda_timeout            = 30                     # Timeout for the Lambda function in seconds
+lambda_runtime            = "python3.9"            # Runtime for the Lambda function
+
+# Lambda Environment Variables
+lambda_environment_variables = {
+  environment = "dev"                              # Environment name
+  LOG_LEVEL   = "info"                             # Log level (debug, info, warn, error)
+}
+
+# API Gateway Configuration
+api_gateway_name           = "lambda-api-gateway"   # Name of the API Gateway
+api_gateway_stage_name     = "dev"                  # Name of the API Gateway stage
+api_throttling_burst_limit = 5                      # API Gateway throttling burst limit
+api_throttling_rate_limit  = 10                     # API Gateway throttling rate limit
+
+# CORS Configuration
+cors_allow_origins         = ["*"]                  # List of allowed origins for CORS
+cors_allow_methods         = [                      # List of allowed HTTP methods for CORS
+  "GET", 
+  "POST", 
+  "PUT", 
+  "DELETE", 
+  "OPTIONS"
+]
+cors_allow_headers         = [                      # List of allowed headers for CORS
+  "Content-Type", 
+  "Authorization"
+]
+cors_max_age               = 300                    # Maximum age (in seconds) of the CORS configuration
+
+# Resource Tags
+tags = {
+  Environment = "dev"                               # Environment tag
+  Project     = "terraform-labs"                    # Project name
+  Terraform   = "true"                              # Managed by Terraform
+  Lab         = "LAB10-Lambda"                      # Lab identifier
+} 

@@ -1,0 +1,25 @@
+# Copy this file to terraform.tfvars and edit as needed
+aws_region          = "eu-west-1"
+environment         = "dev"
+name_prefix         = "lab06"
+
+# VPC Configuration
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+
+# Instance Configuration
+ami_id             = "ami-0c1bc246476a5572b"
+instance_type      = "t2.micro"
+key_name           = null  # Set to your key pair name for SSH access
+
+# CloudWatch Log Configuration
+web_access_log_group_name = "/aws/ec2/web/access"
+web_error_log_group_name  = "/aws/ec2/web/error"
+system_log_group_name     = "/aws/ec2/system"
+log_retention_days        = 7
+
+# Alarm Configuration
+alarm_email              = null  # Set to your email address to receive notifications
+cpu_alarm_threshold      = 80
+memory_alarm_threshold   = 80
+disk_alarm_threshold     = 85 
