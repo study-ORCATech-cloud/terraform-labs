@@ -8,7 +8,7 @@ Below is the complete solution for the `main.tf` file with all TODOs implemented
 
 ```terraform
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 }
 
 #############################################

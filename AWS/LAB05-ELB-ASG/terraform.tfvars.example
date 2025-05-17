@@ -1,0 +1,26 @@
+# Copy this file to terraform.tfvars and edit as needed
+aws_region         = "eu-west-1"
+environment        = "dev"
+name_prefix        = "lab05"
+
+# VPC and Subnet Configuration
+# Replace these with your own VPC and subnet IDs from LAB04 or existing resources
+vpc_id             = "vpc-xxxxxxxxxxxxxxxxx"
+public_subnet_ids  = ["subnet-xxxxxxxx", "subnet-yyyyyyyy"]
+private_subnet_ids = ["subnet-zzzzzzzz", "subnet-aaaaaaaa"]
+
+# Instance Configuration
+ami_id             = "ami-0c55b159cbfafe1f0"
+instance_type      = "t2.micro"
+key_name           = null  # Set to your key pair name for SSH access
+
+# Auto Scaling Configuration
+min_size           = 2
+max_size           = 5
+desired_capacity   = 2
+
+# Scaling Policy Configuration
+scale_out_threshold = 70  # CPU percentage to trigger scale out
+scale_in_threshold  = 30  # CPU percentage to trigger scale in
+evaluation_periods  = 2   # Number of periods to evaluate before alarm
+metric_period       = 120 # Period in seconds for metric evaluation 

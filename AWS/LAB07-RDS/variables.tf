@@ -1,7 +1,19 @@
-variable "region" {
+variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
   default     = "eu-west-1"
+}
+
+variable "environment" {
+  description = "Environment name for tagging resources"
+  type        = string
+  default     = "dev"
+}
+
+variable "name_prefix" {
+  description = "Prefix to be used for resource names"
+  type        = string
+  default     = "lab07"
 }
 
 variable "vpc_cidr" {
@@ -100,4 +112,4 @@ variable "key_name" {
   description = "Key pair name for SSH access to the client instance"
   type        = string
   default     = null
-} 
+}

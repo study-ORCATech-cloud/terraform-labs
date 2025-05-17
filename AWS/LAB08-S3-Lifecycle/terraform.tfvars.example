@@ -1,0 +1,21 @@
+# Copy this file to terraform.tfvars and edit as needed
+aws_region                = "eu-west-1"
+environment               = "dev"
+name_prefix               = "lab08"
+
+# Bucket Configuration
+bucket_name               = "terraform-lab08-lifecycle-YOURNAME"  # Must be globally unique
+
+# Storage prefixes
+standard_prefix           = "standard"
+logs_prefix               = "logs"
+archive_prefix            = "archive"
+
+# Lifecycle Configuration
+days_to_standard_ia       = 30
+days_to_glacier           = 60
+days_to_expiration        = 365
+days_to_delete_noncurrent = 90
+
+# Monitoring Configuration
+storage_threshold         = 5000000000  # 5GB 

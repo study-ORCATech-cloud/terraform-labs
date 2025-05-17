@@ -2,12 +2,25 @@
 
 This document contains solutions to the TODOs in the main.tf file for LAB06.
 
-## Solutions for IAM role, policy attachment, and instance profile
+## Getting Started
+
+After implementing each solution section, follow these additional steps:
+
+1. **Update the EC2 Instance** - After implementing the IAM role and instance profile:
+   ```hcl
+   # In main.tf, uncomment this line in the aws_instance "web_server" resource:
+   iam_instance_profile = aws_iam_instance_profile.cloudwatch_profile.name
+   ```
+
+2. **Uncomment Outputs** - After implementing each resource section, uncomment the corresponding outputs in outputs.tf.
+
+## Solutions for IAM Role and Instance Profile
 
 ```hcl
-# Create IAM role for CloudWatch access
+# IAM role for CloudWatch access
 resource "aws_iam_role" "cloudwatch_role" {
-  name = "EC2CloudWatchRole"
+  name = "${var.name_prefix}-cloudwatch-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -20,17 +33,24 @@ resource "aws_iam_role" "cloudwatch_role" {
       }
     ]
   })
+
+  tags = {
+    Name        = "${var.name_prefix}-cloudwatch-role"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
+  }
 }
 
 # Attach CloudWatch policy to IAM role
-resource "aws_iam_role_policy_attachment" "cloudwatch_agent_attach" {
+resource "aws_iam_role_policy_attachment" "cloudwatch_policy_attachment" {
   role       = aws_iam_role.cloudwatch_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # Create instance profile
 resource "aws_iam_instance_profile" "cloudwatch_profile" {
-  name = "CloudWatchAgentProfile"
+  name = "${var.name_prefix}-cloudwatch-profile"
   role = aws_iam_role.cloudwatch_role.name
 }
 ```
@@ -38,31 +58,40 @@ resource "aws_iam_instance_profile" "cloudwatch_profile" {
 ## Solutions for CloudWatch Log Groups
 
 ```hcl
-# Create CloudWatch Log Groups
+# CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "web_access_log" {
   name              = var.web_access_log_group_name
-  retention_in_days = 7
+  retention_in_days = var.log_retention_days
+
   tags = {
-    Environment = "lab"
-    Application = "webserver"
+    Name        = "${var.name_prefix}-web-access-logs"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
   }
 }
 
 resource "aws_cloudwatch_log_group" "web_error_log" {
   name              = var.web_error_log_group_name
-  retention_in_days = 7
+  retention_in_days = var.log_retention_days
+
   tags = {
-    Environment = "lab"
-    Application = "webserver"
+    Name        = "${var.name_prefix}-web-error-logs"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
   }
 }
 
 resource "aws_cloudwatch_log_group" "system_log" {
   name              = var.system_log_group_name
-  retention_in_days = 7
+  retention_in_days = var.log_retention_days
+
   tags = {
-    Environment = "lab"
-    Application = "system"
+    Name        = "${var.name_prefix}-system-logs"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
   }
 }
 ```
@@ -70,28 +99,28 @@ resource "aws_cloudwatch_log_group" "system_log" {
 ## Solutions for CloudWatch Metric Filters
 
 ```hcl
-# Create a metric filter for HTTP 404 errors
+# Metric filter for HTTP 404 errors
 resource "aws_cloudwatch_log_metric_filter" "http_404_errors" {
-  name           = "http-404-errors"
-  pattern        = "[ip, identity, user_id, timestamp, request, status_code=404, size]"
+  name           = "${var.name_prefix}-http-404-errors"
+  pattern        = "[ip, id, user, timestamp, request, status_code=404, size]"
   log_group_name = aws_cloudwatch_log_group.web_access_log.name
 
   metric_transformation {
-    name      = "HTTP404Count"
-    namespace = "WebServer/ErrorCount"
+    name      = "HTTP404Errors"
+    namespace = "WebServer"
     value     = "1"
   }
 }
 
-# Create a metric filter for HTTP 5xx errors
+# Metric filter for HTTP 5XX errors
 resource "aws_cloudwatch_log_metric_filter" "http_5xx_errors" {
-  name           = "http-5xx-errors"
-  pattern        = "[ip, identity, user_id, timestamp, request, status_code=5*, size]"
+  name           = "${var.name_prefix}-http-5xx-errors"
+  pattern        = "[ip, id, user, timestamp, request, status_code=5*, size]"
   log_group_name = aws_cloudwatch_log_group.web_access_log.name
 
   metric_transformation {
-    name      = "HTTP5xxCount"
-    namespace = "WebServer/ErrorCount"
+    name      = "HTTP5xxErrors"
+    namespace = "WebServer"
     value     = "1"
   }
 }
@@ -100,13 +129,20 @@ resource "aws_cloudwatch_log_metric_filter" "http_5xx_errors" {
 ## Solutions for SNS Topic and Subscription
 
 ```hcl
-# Create an SNS topic for alarms
+# SNS Topic for CloudWatch Alarms
 resource "aws_sns_topic" "cloudwatch_alarms" {
-  name         = "cloudwatch-alarms"
+  name         = "${var.name_prefix}-cloudwatch-alarms"
   display_name = "CloudWatch Alarms"
+  
+  tags = {
+    Name        = "${var.name_prefix}-cloudwatch-alarms"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
+  }
 }
 
-# Create SNS subscription if email is provided
+# SNS Topic Subscription for email notification
 resource "aws_sns_topic_subscription" "email_subscription" {
   count     = var.alarm_email != null ? 1 : 0
   topic_arn = aws_sns_topic.cloudwatch_alarms.arn
@@ -118,162 +154,187 @@ resource "aws_sns_topic_subscription" "email_subscription" {
 ## Solutions for CloudWatch Alarms
 
 ```hcl
-# Create CloudWatch alarm for high CPU utilization
-resource "aws_cloudwatch_metric_alarm" "high_cpu" {
-  alarm_name          = "high-cpu-utilization"
+# High CPU utilization alarm
+resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm" {
+  alarm_name          = "${var.name_prefix}-high-cpu-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
   period              = 300
   statistic           = "Average"
-  threshold           = 80
-  alarm_description   = "Alarm when CPU exceeds 80% for 10 minutes"
+  threshold           = var.cpu_alarm_threshold
+  alarm_description   = "This metric monitors EC2 CPU utilization"
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms.arn]
-
   dimensions = {
     InstanceId = aws_instance.web_server.id
   }
+  
+  tags = {
+    Name        = "${var.name_prefix}-high-cpu-alarm"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
+  }
 }
 
-# Create CloudWatch alarm for memory utilization (from CloudWatch agent)
-resource "aws_cloudwatch_metric_alarm" "high_memory" {
-  alarm_name          = "high-memory-utilization"
+# High memory utilization alarm
+resource "aws_cloudwatch_metric_alarm" "memory_utilization_alarm" {
+  alarm_name          = "${var.name_prefix}-high-memory-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "mem_used_percent"
   namespace           = "CWAgent"
   period              = 300
   statistic           = "Average"
-  threshold           = 80
-  alarm_description   = "Alarm when memory usage exceeds 80% for 10 minutes"
+  threshold           = var.memory_alarm_threshold
+  alarm_description   = "This metric monitors memory utilization"
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms.arn]
-
   dimensions = {
     InstanceId = aws_instance.web_server.id
   }
+  
+  tags = {
+    Name        = "${var.name_prefix}-high-memory-alarm"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
+  }
 }
 
-# Create CloudWatch alarm for disk utilization
-resource "aws_cloudwatch_metric_alarm" "high_disk" {
-  alarm_name          = "high-disk-utilization"
+# High disk usage alarm
+resource "aws_cloudwatch_metric_alarm" "disk_usage_alarm" {
+  alarm_name          = "${var.name_prefix}-high-disk-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "disk_used_percent"
   namespace           = "CWAgent"
   period              = 300
   statistic           = "Average"
-  threshold           = 80
-  alarm_description   = "Alarm when disk usage exceeds 80% for 10 minutes"
+  threshold           = var.disk_alarm_threshold
+  alarm_description   = "This metric monitors disk usage"
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms.arn]
-
   dimensions = {
     InstanceId = aws_instance.web_server.id
     path       = "/"
     fstype     = "xfs"
   }
+  
+  tags = {
+    Name        = "${var.name_prefix}-high-disk-alarm"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
+  }
 }
 
-# Create CloudWatch alarm for HTTP 404 errors
-resource "aws_cloudwatch_metric_alarm" "http_404_alarm" {
-  alarm_name          = "http-404-errors"
+# HTTP 404 errors alarm
+resource "aws_cloudwatch_metric_alarm" "http_404_errors_alarm" {
+  alarm_name          = "${var.name_prefix}-404-errors-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
-  metric_name         = "HTTP404Count"
-  namespace           = "WebServer/ErrorCount"
+  metric_name         = "HTTP404Errors"
+  namespace           = "WebServer"
   period              = 300
   statistic           = "Sum"
   threshold           = 5
-  alarm_description   = "Alarm when more than 5 HTTP 404 errors are detected in 5 minutes"
+  alarm_description   = "This metric monitors HTTP 404 errors"
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms.arn]
+  
+  tags = {
+    Name        = "${var.name_prefix}-404-errors-alarm"
+    Environment = var.environment
+    Lab         = "LAB06-CLOUDWATCH"
+    Terraform   = "true"
+  }
 }
 ```
 
 ## Solution for CloudWatch Dashboard
 
 ```hcl
-# Create a CloudWatch Dashboard
+# CloudWatch Dashboard
 resource "aws_cloudwatch_dashboard" "main" {
-  dashboard_name = "cloudwatch-lab-dashboard"
+  dashboard_name = "${var.name_prefix}-dashboard"
 
   dashboard_body = jsonencode({
     widgets = [
       {
-        type = "metric"
-        x    = 0
-        y    = 0
-        width = 12
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
         height = 6
         properties = {
           metrics = [
             ["AWS/EC2", "CPUUtilization", "InstanceId", aws_instance.web_server.id]
           ]
-          period = 60
-          stat = "Average"
-          region = var.region
-          title = "EC2 Instance CPU"
+          period = 300
+          stat   = "Average"
+          region = var.aws_region
+          title  = "CPU Utilization"
         }
       },
       {
-        type = "metric"
-        x    = 12
-        y    = 0
-        width = 12
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
         height = 6
         properties = {
           metrics = [
             ["CWAgent", "mem_used_percent", "InstanceId", aws_instance.web_server.id]
           ]
-          period = 60
-          stat = "Average"
-          region = var.region
-          title = "Memory Usage"
+          period = 300
+          stat   = "Average"
+          region = var.aws_region
+          title  = "Memory Usage"
         }
       },
       {
-        type = "metric"
-        x    = 0
-        y    = 6
-        width = 12
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
         height = 6
         properties = {
           metrics = [
             ["CWAgent", "disk_used_percent", "InstanceId", aws_instance.web_server.id, "path", "/", "fstype", "xfs"]
           ]
-          period = 60
-          stat = "Average"
-          region = var.region
-          title = "Disk Usage"
+          period = 300
+          stat   = "Average"
+          region = var.aws_region
+          title  = "Disk Usage"
         }
       },
       {
-        type = "metric"
-        x    = 12
-        y    = 6
-        width = 12
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
         height = 6
         properties = {
           metrics = [
-            ["WebServer/ErrorCount", "HTTP404Count"],
-            ["WebServer/ErrorCount", "HTTP5xxCount"]
+            ["WebServer", "HTTP404Errors"],
+            ["WebServer", "HTTP5xxErrors"]
           ]
-          period = 60
-          stat = "Sum"
-          region = var.region
-          title = "HTTP Error Counts"
+          period = 300
+          stat   = "Sum"
+          region = var.aws_region
+          title  = "HTTP Errors"
         }
       },
       {
-        type = "log"
-        x    = 0
-        y    = 12
-        width = 24
+        type   = "log"
+        x      = 0
+        y      = 12
+        width  = 24
         height = 6
         properties = {
-          query = "SOURCE '${aws_cloudwatch_log_group.web_access_log.name}' | fields @timestamp, @message\n| sort @timestamp desc\n| limit 20"
-          region = var.region
-          title = "Web Access Logs"
-          view = "table"
+          query   = "SOURCE '${var.web_access_log_group_name}' | fields @timestamp, @message | sort @timestamp desc | limit 20"
+          region  = var.aws_region
+          title   = "Recent Web Access Logs"
+          view    = "table"
         }
       }
     ]

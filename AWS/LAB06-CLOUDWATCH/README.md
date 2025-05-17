@@ -8,7 +8,7 @@ This hands-on lab will guide you through the process of implementing a proper mo
 
 ---
 
-## 🎯 Objectives
+## 🎯 Learning Objectives
 
 - Deploy infrastructure with built-in monitoring capabilities
 - Configure the CloudWatch agent for custom metrics collection
@@ -28,30 +28,82 @@ This hands-on lab will guide you through the process of implementing a proper mo
 
 ---
 
-## 📁 File Structure
+## 📁 Files Structure
 
-```bash
+```
 AWS/LAB06-CLOUDWATCH/
-├── main.tf               # Primary Terraform configuration with TODO sections
-├── variables.tf          # Variable definitions
-├── outputs.tf            # Output values
-├── terraform.tfvars      # Variable values
-├── solutions.md          # Solutions to the TODOs (for instructor reference)
-└── README.md             # This documentation
+├── main.tf                  # Main configuration with TODO sections for students
+├── variables.tf             # Variable declarations
+├── outputs.tf               # Output definitions
+├── terraform.tfvars.example # Sample variable values (rename to terraform.tfvars to use)
+├── providers.tf             # Provider configuration
+├── solutions.md             # Solutions to the TODOs (for reference)
+└── README.md                # Lab instructions
 ```
 
 ---
 
-## 🚀 Steps to Complete the Lab
+## ⚠️ Important Setup Notes
 
-### 1. Prepare Your Environment
+1. **Complete the IAM TODO First**: In this lab, the EC2 instance requires an IAM instance profile. You must first complete the "IAM Role and Policy" TODO sections before adding the instance profile reference to the EC2 instance.
 
-1. **Review the terraform.tfvars file**
+2. **Uncomment Outputs**: As you complete each TODO section, you'll need to uncomment the corresponding output in `outputs.tf`. Each output is commented out to prevent Terraform from failing when the related resources don't exist yet.
+
+3. **Sequential Completion**: Follow the TODO sections in order for the best experience, as some resources depend on others you'll create earlier.
+
+---
+
+## 🌐 Architecture Overview
+
+This lab creates a complete CloudWatch monitoring infrastructure:
+
+1. **EC2 Instance**: A web server with the CloudWatch agent installed
+2. **CloudWatch Agent**: Collects custom metrics (CPU, memory, disk) and log files
+3. **Log Groups**: Stores web access logs, web error logs, and system logs
+4. **Metric Filters**: Extracts metrics from logs (e.g., HTTP errors)
+5. **Alarms**: Notifies when metrics exceed thresholds
+6. **Dashboard**: Visualizes all metrics and logs in one place
+
+---
+
+## 🚀 Lab Steps
+
+### Step 1: Prepare Your Environment
+
+1. Ensure AWS CLI is configured:
+   ```bash
+   aws configure
+   # OR use environment variables:
+   # export AWS_ACCESS_KEY_ID="your_access_key"
+   # export AWS_SECRET_ACCESS_KEY="your_secret_key"
+   # export AWS_DEFAULT_REGION="eu-west-1"
+   ```
+
+### Step 2: Initialize Terraform
+
+1. Navigate to the lab directory:
+   ```bash
+   cd AWS/LAB06-CLOUDWATCH
+   ```
+
+2. Initialize Terraform to download provider plugins:
+   ```bash
+   terraform init
+   ```
+
+### Step 3: Configure Infrastructure Settings
+
+1. Create a `terraform.tfvars` file by copying the example:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+2. Update your terraform.tfvars file:
    - Set your preferred region (default: eu-west-1)
    - Configure your SSH key pair name
    - Optionally add your email address to receive alarm notifications
 
-### 2. Complete the TODO Sections in main.tf
+### Step 4: Complete the TODO Sections
 
 The main.tf file contains several TODO sections that you need to implement:
 
@@ -81,41 +133,49 @@ The main.tf file contains several TODO sections that you need to implement:
    - Create a dashboard with multiple widgets
    - Configure metrics and logs visualizations
 
-### 3. Deploy Resources
+### Step 5: Review the Execution Plan
 
-1. **Initialize Terraform**
-   ```bash
-   terraform init
-   ```
-
-2. **Preview the deployment plan**
+1. Generate and review an execution plan:
    ```bash
    terraform plan
    ```
 
-3. **Apply the configuration**
+2. The plan will show all the resources to be created:
+   - VPC, subnet, and security group
+   - EC2 instance with CloudWatch agent
+   - IAM role and instance profile
+   - CloudWatch log groups and metric filters
+   - SNS topic and subscription
+   - CloudWatch alarms
+   - CloudWatch dashboard
+
+### Step 6: Apply the Configuration
+
+1. Apply the Terraform configuration:
    ```bash
    terraform apply
    ```
 
-4. **Note the outputs**
+2. Type `yes` when prompted to confirm
+
+3. After successful application, note the outputs:
    - EC2 instance public IP
    - CloudWatch dashboard URL
    - Log group names
 
-### 4. Explore the CloudWatch Console
+### Step 7: Explore the CloudWatch Console
 
-1. **Navigate to CloudWatch in the AWS Console**
-2. **Explore log groups**
+1. Navigate to CloudWatch in the AWS Console
+2. Explore log groups:
    - Web server access logs
    - Web server error logs
    - System logs
-3. **Check your dashboard**
+3. Check your dashboard:
    - View the custom dashboard with metrics and logs
 
-### 5. Test the CloudWatch Alarms
+### Step 8: Test the CloudWatch Alarms
 
-1. **Generate CPU load**
+1. Generate CPU load:
    - SSH into your EC2 instance:
      ```bash
      ssh -i your-key.pem ec2-user@<instance-public-ip>
@@ -125,64 +185,76 @@ The main.tf file contains several TODO sections that you need to implement:
      sudo stress --cpu 2 --timeout 300
      ```
 
-2. **Generate HTTP errors**
+2. Generate HTTP errors:
    - SSH into your EC2 instance
    - Make curl requests to non-existent pages:
      ```bash
      for i in {1..10}; do curl http://localhost/nonexistent-page-$i; done
      ```
 
-3. **Observe alarm state changes**
+3. Observe alarm state changes:
    - In the AWS Console, go to CloudWatch > Alarms
    - Watch the alarm status change from "OK" to "ALARM"
    - If you configured email notifications, check your inbox
 
 ---
 
-## 🔍 Key Components to Implement
+## 🔍 Understanding the Components
 
 ### IAM Role and Policies
-You'll need to create an IAM role that allows the EC2 instance to interact with CloudWatch services. The role needs to have the CloudWatchAgentServerPolicy attached to grant permission to send metrics and logs.
+An IAM role allows the EC2 instance to interact with CloudWatch services. The CloudWatchAgentServerPolicy grants permission to send metrics and logs.
 
 ### CloudWatch Agent
-The lab includes an EC2 instance with the CloudWatch agent pre-configured in the user data. The agent collects:
+The CloudWatch agent collects:
 - **System metrics**: CPU, memory, disk usage
 - **Log files**: Apache access and error logs, system messages
 
 ### Log Groups and Metric Filters
-You'll need to create three log groups:
+Three log groups store different types of logs:
 - `/aws/ec2/web/access` - Apache access logs
 - `/aws/ec2/web/error` - Apache error logs
 - `/aws/ec2/system` - System logs
 
-You'll also implement metric filters to extract metrics from logs, including:
+Metric filters extract metrics from logs, including:
 - HTTP 404 errors
 - HTTP 5xx errors
 
 ### Alarms
-You'll configure CloudWatch alarms for:
+CloudWatch alarms monitor metrics and trigger when thresholds are crossed:
 - High CPU utilization (> 80%)
 - High memory usage (> 80%)
 - High disk usage (> 80%)
-- HTTP error rate (> 5 errors per minute)
+- HTTP error rate (> 5 errors per 5 minutes)
 
 ### Dashboard
-You'll create a comprehensive dashboard that displays:
+The CloudWatch dashboard provides a comprehensive view of:
 - CPU, memory, and disk metrics
 - HTTP error counts
 - Latest web access logs
 
 ---
 
-## 🧼 Cleanup
+## 📋 Cleanup
 
-When you're finished with the lab, you should destroy all created resources to avoid unexpected AWS charges.
+To avoid ongoing charges, make sure to destroy the resources created in this lab when you're done:
 
-```bash
-terraform destroy
-```
+1. Run the Terraform destroy command:
+   ```bash
+   terraform destroy
+   ```
 
-This will remove all CloudWatch log groups, metric filters, alarms, dashboards, and the EC2 instance created during this lab.
+2. Type `yes` when prompted to confirm the destruction of resources.
+
+3. Verify that all resources have been properly removed:
+   ```bash
+   # Check if the CloudWatch log groups exist
+   aws logs describe-log-groups --log-group-name-prefix /aws/ec2
+   
+   # Check if the EC2 instance exists
+   aws ec2 describe-instances --instance-ids $(terraform output -raw instance_id)
+   ```
+
+> ⚠️ **Note**: Destroying resources is permanent. Only do this when you're sure you no longer need the infrastructure.
 
 ---
 
@@ -199,18 +271,7 @@ This will remove all CloudWatch log groups, metric filters, alarms, dashboards, 
 ## 📚 References
 
 - [CloudWatch Agent Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html)
-- [CloudWatch Metrics Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/working_with_metrics.html)
 - [CloudWatch Logs Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+- [CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
+- [CloudWatch Dashboards Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Dashboards.html)
 - [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-
----
-
-## ✅ Key Takeaways
-
-After completing this lab, you'll understand how to:
-
-- Implement comprehensive monitoring for AWS resources
-- Configure automated alerting for system and application issues
-- Collect and analyze logs and metrics using CloudWatch
-- Create dashboards for real-time visibility into your infrastructure
-- Automate the entire monitoring setup using Infrastructure as Code (Terraform)

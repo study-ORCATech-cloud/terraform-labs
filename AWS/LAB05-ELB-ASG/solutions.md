@@ -7,8 +7,8 @@ This document contains solutions to the TODOs in the main.tf file for LAB05.
 ```hcl
 # Security Group for the ALB
 resource "aws_security_group" "alb_sg" {
-  name        = "alb-security-group"
-  description = "Security group for the ALB"
+  name        = "${var.name_prefix}-alb-sg"
+  description = "Security group for the Application Load Balancer"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -26,13 +26,16 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name = "alb-security-group"
+    Name        = "${var.name_prefix}-alb-sg"
+    Environment = var.environment
+    Lab         = "LAB05-ELB-ASG"
+    Terraform   = "true"
   }
 }
 
 # Security Group for the EC2 instances
 resource "aws_security_group" "instance_sg" {
-  name        = "instance-security-group"
+  name        = "${var.name_prefix}-instance-sg"
   description = "Security group for the EC2 instances"
   vpc_id      = var.vpc_id
 
@@ -51,7 +54,10 @@ resource "aws_security_group" "instance_sg" {
   }
 
   tags = {
-    Name = "instance-security-group"
+    Name        = "${var.name_prefix}-instance-sg"
+    Environment = var.environment
+    Lab         = "LAB05-ELB-ASG"
+    Terraform   = "true"
   }
 }
 ```
@@ -61,7 +67,7 @@ resource "aws_security_group" "instance_sg" {
 ```hcl
 # Application Load Balancer
 resource "aws_lb" "app_lb" {
-  name               = "app-load-balancer"
+  name               = "${var.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
@@ -70,13 +76,16 @@ resource "aws_lb" "app_lb" {
   enable_deletion_protection = false
 
   tags = {
-    Name = "app-load-balancer"
+    Name        = "${var.name_prefix}-alb"
+    Environment = var.environment
+    Lab         = "LAB05-ELB-ASG"
+    Terraform   = "true"
   }
 }
 
 # Target Group for the ALB
 resource "aws_lb_target_group" "app_tg" {
-  name     = "app-target-group"
+  name     = "${var.name_prefix}-tg"
   port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -93,7 +102,10 @@ resource "aws_lb_target_group" "app_tg" {
   }
 
   tags = {
-    Name = "app-target-group"
+    Name        = "${var.name_prefix}-tg"
+    Environment = var.environment
+    Lab         = "LAB05-ELB-ASG"
+    Terraform   = "true"
   }
 }
 
@@ -115,7 +127,7 @@ resource "aws_lb_listener" "app_listener" {
 ```hcl
 # Launch Template for ASG
 resource "aws_launch_template" "app_launch_template" {
-  name_prefix   = "app-launch-template"
+  name_prefix   = "${var.name_prefix}-launch-template"
   image_id      = var.ami_id
   instance_type = var.instance_type
   key_name      = var.key_name
@@ -131,21 +143,24 @@ resource "aws_launch_template" "app_launch_template" {
     yum install -y httpd
     systemctl start httpd
     systemctl enable httpd
-    echo "<html><body><h1>Hello from $(hostname -f)</h1></body></html>" > /var/www/html/index.html
+    echo "<html><body><h1>Hello from $(hostname -f)</h1><p>LAB05: ELB-ASG Demo</p></body></html>" > /var/www/html/index.html
   EOF
   )
 
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "asg-instance"
+      Name        = "${var.name_prefix}-instance"
+      Environment = var.environment
+      Lab         = "LAB05-ELB-ASG"
+      Terraform   = "true"
     }
   }
 }
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app_asg" {
-  name                      = "app-autoscaling-group"
+  name                      = "${var.name_prefix}-asg"
   min_size                  = var.min_size
   max_size                  = var.max_size
   desired_capacity          = var.desired_capacity
@@ -161,18 +176,36 @@ resource "aws_autoscaling_group" "app_asg" {
 
   tag {
     key                 = "Name"
-    value               = "asg-instance"
+    value               = "${var.name_prefix}-instance"
+    propagate_at_launch = true
+  }
+  
+  tag {
+    key                 = "Environment"
+    value               = var.environment
+    propagate_at_launch = true
+  }
+  
+  tag {
+    key                 = "Lab"
+    value               = "LAB05-ELB-ASG"
+    propagate_at_launch = true
+  }
+  
+  tag {
+    key                 = "Terraform"
+    value               = "true"
     propagate_at_launch = true
   }
 }
 ```
 
-## Solutions for Scaling Policies
+## Solutions for Scaling Policies and CloudWatch Alarms
 
 ```hcl
 # Scale Out Policy
 resource "aws_autoscaling_policy" "scale_out" {
-  name                   = "scale-out-policy"
+  name                   = "${var.name_prefix}-scale-out-policy"
   autoscaling_group_name = aws_autoscaling_group.app_asg.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = 1
@@ -181,28 +214,24 @@ resource "aws_autoscaling_policy" "scale_out" {
 
 # Scale In Policy
 resource "aws_autoscaling_policy" "scale_in" {
-  name                   = "scale-in-policy"
+  name                   = "${var.name_prefix}-scale-in-policy"
   autoscaling_group_name = aws_autoscaling_group.app_asg.name
   adjustment_type        = "ChangeInCapacity"
   scaling_adjustment     = -1
   cooldown               = 300
 }
-```
 
-## Solutions for CloudWatch Alarms
-
-```hcl
 # High CPU Alarm
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
-  alarm_name          = "high-cpu-alarm"
+  alarm_name          = "${var.name_prefix}-high-cpu-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = 2
+  evaluation_periods  = var.evaluation_periods
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = 120
+  period              = var.metric_period
   statistic           = "Average"
-  threshold           = 70
-  alarm_description   = "Scale out when CPU exceeds 70%"
+  threshold           = var.scale_out_threshold
+  alarm_description   = "Scale out when CPU exceeds ${var.scale_out_threshold}%"
   alarm_actions       = [aws_autoscaling_policy.scale_out.arn]
 
   dimensions = {
@@ -212,19 +241,21 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
 
 # Low CPU Alarm
 resource "aws_cloudwatch_metric_alarm" "low_cpu" {
-  alarm_name          = "low-cpu-alarm"
+  alarm_name          = "${var.name_prefix}-low-cpu-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods  = 2
+  evaluation_periods  = var.evaluation_periods
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = 120
+  period              = var.metric_period
   statistic           = "Average"
-  threshold           = 30
-  alarm_description   = "Scale in when CPU is below 30%"
+  threshold           = var.scale_in_threshold
+  alarm_description   = "Scale in when CPU is below ${var.scale_in_threshold}%"
   alarm_actions       = [aws_autoscaling_policy.scale_in.arn]
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.app_asg.name
   }
 }
-``` 
+```
+
+These solutions implement all the TODO items in the main.tf file according to the specified requirements. 

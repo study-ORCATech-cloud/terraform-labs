@@ -4,27 +4,27 @@
 # - Set CIDR block from var.vpc_cidr
 # - Enable DNS support and hostnames
 # - Add appropriate tags
-# HINT: Use the aws_vpc resource
+# HINT: Use the aws_vpc resource with tags for Name, Environment, Lab, and Terraform
 
 # TODO: Create subnets in different availability zones for high availability
 # Requirements:
-# - Create two subnets in different AZs (${var.region}a and ${var.region}b)
+# - Create two subnets in different AZs (${var.aws_region}a and ${var.aws_region}b)
 # - Use var.subnet_cidr_1 and var.subnet_cidr_2 for CIDR blocks
 # - Associate with the VPC you created
-# - Add appropriate tags
-# HINT: Use the aws_subnet resource
+# - Add appropriate tags with Name including var.name_prefix
+# HINT: Use the aws_subnet resource with tags
 
 # TODO: Create an Internet Gateway
 # Requirements:
 # - Attach it to the VPC
-# - Add appropriate tags
-# HINT: Use the aws_internet_gateway resource
+# - Add appropriate tags with Name including var.name_prefix
+# HINT: Use the aws_internet_gateway resource with tags
 
 # TODO: Create a route table for public access
 # Requirements:
 # - Associate with the VPC
 # - Add a route for 0.0.0.0/0 pointing to the Internet Gateway
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix
 # HINT: Use the aws_route_table resource with a route block
 
 # TODO: Associate the route table with the subnets
@@ -35,50 +35,50 @@
 # Security Groups
 # TODO: Create a security group for the RDS instance
 # Requirements:
-# - Name it "rds-security-group"
+# - Name it "${var.name_prefix}-rds-sg"
 # - Allow MySQL traffic (port 3306) from the CIDR range in var.allowed_cidr
 # - Allow all outbound traffic
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix, Environment, Lab, and Terraform
 # HINT: Use the aws_security_group resource
 
 # TODO: Create an EC2 security group for the client instance
 # Requirements:
-# - Name it "mysql-client-sg"
+# - Name it "${var.name_prefix}-mysql-client-sg"
 # - Allow SSH access (port 22) from anywhere for this lab
 # - Allow all outbound traffic
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix, Environment, Lab, and Terraform
 # HINT: Use the aws_security_group resource
 
 # RDS Configuration
 # TODO: Create a DB subnet group
 # Requirements:
-# - Name it "rds-subnet-group"
+# - Name it "${var.name_prefix}-rds-subnet-group"
 # - Include both subnets you created
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix
 # HINT: Use the aws_db_subnet_group resource with subnet_ids
 
 # TODO: Create a DB parameter group
 # Requirements:
-# - Name it "rds-mysql-params"
+# - Name it "${var.name_prefix}-rds-mysql-params"
 # - Use the "mysql8.0" family
 # - Configure the following parameters:
 #   - character_set_server = "utf8mb4"
 #   - collation_server = "utf8mb4_general_ci"
 #   - max_connections = "150"
 #   - general_log = "1"
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix
 # HINT: Use the aws_db_parameter_group resource with multiple parameter blocks
 
 # TODO: Create an option group
 # Requirements:
-# - Name it "rds-mysql-options"
+# - Name it "${var.name_prefix}-rds-mysql-options"
 # - Set it up for MySQL 8.0
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix
 # HINT: Use the aws_db_option_group resource
 
 # TODO: Create the RDS instance
 # Requirements:
-# - Use var.db_identifier as the identifier
+# - Use var.db_identifier prefixed with var.name_prefix as the identifier
 # - Set up MySQL 8.0 as the engine
 # - Use var.db_instance_class for the instance class
 # - Configure allocated storage from var.allocated_storage with gp2 storage type
@@ -94,7 +94,7 @@
 # - Set skip_final_snapshot to true for lab purposes
 # - Disable deletion protection for lab purposes
 # - Enable CloudWatch log exports for error, general, and slowquery logs
-# - Add appropriate tags
+# - Add appropriate tags with Name including var.name_prefix, Environment, Lab, and Terraform
 # HINT: Use the aws_db_instance resource
 
 # TODO: Create an EC2 instance to use as a MySQL client
@@ -110,5 +110,5 @@
 #   - Installs MySQL client
 #   - Creates a connection script with the RDS endpoint details
 #   - Creates a sample SQL script to create tables
-# - Add appropriate tags
+# - Add appropriate tags with Name including "${var.name_prefix}-mysql-client", Environment, Lab, and Terraform
 # HINT: Use the aws_instance resource with count and heredoc for user_data

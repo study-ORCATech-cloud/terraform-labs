@@ -1,0 +1,53 @@
+# Copy this file to terraform.tfvars and edit as needed
+region                  = "eu-west-1"
+
+# Domain Configuration
+domain_name             = "example.com"  # Replace with your actual domain name
+
+# Server IP Addresses and Endpoints
+web_ip                  = "203.0.113.10"  # Replace with your web server IP
+web_endpoint            = "ec2-instance.eu-west-1.compute.amazonaws.com"  # Replace with actual endpoint
+api_primary_ip          = "203.0.113.20"  # Replace with your primary API IP
+api_secondary_ip        = "203.0.113.21"  # Replace with your secondary API IP
+
+# Email Configuration (Optional)
+create_mx_record        = false  # Set to true to create MX records
+mx_server_primary       = "aspmx.l.google.com"  # Example for Google Workspace
+mx_server_secondary     = "alt1.aspmx.l.google.com"
+mx_server_tertiary      = "alt2.aspmx.l.google.com"
+
+# SPF Record Configuration (Optional)
+create_spf_record       = false  # Set to true to create SPF record
+spf_include             = "_spf.google.com"  # Example for Google Workspace
+
+# DKIM Record Configuration (Optional)
+create_dkim_record      = false  # Set to true to create DKIM record
+dkim_selector           = "google"  # Example for Google Workspace
+dkim_value              = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxyz"  # Replace with actual DKIM key
+
+# Certificate Authority Authorization
+ca_allowed              = "amazonaws.com"  # Allows Amazon's CA to issue certificates
+
+# A/B Testing Configuration (Optional)
+create_weighted_records = false  # Set to true to create weighted records
+test_ip_a               = "203.0.113.30"  # Replace with your version A server IP
+test_ip_b               = "203.0.113.31"  # Replace with your version B server IP
+
+# AWS Service Integrations (Optional)
+create_s3_website_record = false  # Set to true to create S3 website alias
+s3_website_endpoint     = "s3-website.eu-west-1.amazonaws.com"  # This is just an example
+s3_website_hosted_zone_id = "Z1BKCTXD74EZPE"  # eu-west-1 S3 website zone ID
+
+create_cloudfront_record = false  # Set to true to create CloudFront alias
+cloudfront_domain_name  = "d1234abcdef.cloudfront.net"  # Replace with actual distribution domain
+cloudfront_hosted_zone_id = "Z2FDTNDATAQYW2"  # CloudFront hosted zone ID (global)
+
+# Subdomain Delegation (Optional)
+create_subdomain_delegation = false  # Set to true to delegate a subdomain
+delegated_subdomain      = "dev"  # Example subdomain to delegate
+delegated_nameservers    = [
+  "ns-1.awsdns-00.org",
+  "ns-2.awsdns-11.com",
+  "ns-3.awsdns-22.co.uk",
+  "ns-4.awsdns-33.net"
+]  # Replace with actual nameservers 

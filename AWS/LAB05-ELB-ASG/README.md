@@ -184,6 +184,32 @@ Each TODO section includes specific requirements and hints to help you implement
 
 ---
 
+## 📋 Cleanup
+
+To avoid ongoing charges, make sure to destroy the resources created in this lab when you're done:
+
+1. Run the Terraform destroy command:
+   ```bash
+   terraform destroy
+   ```
+
+2. Type `yes` when prompted to confirm the destruction of resources.
+
+3. Verify that all resources have been properly removed:
+   ```bash
+   # Check if the Auto Scaling Group exists
+   aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $(terraform output -raw autoscaling_group_name)
+   
+   # Check if the Load Balancer exists
+   aws elbv2 describe-load-balancers --names $(terraform output -raw elb_dns_name)
+   ```
+
+4. If you used an existing VPC (not created in LAB04), then only the resources from this lab will be removed. Your VPC and its components will remain intact.
+
+> ⚠️ **Note**: Destroying resources is permanent. Only do this when you're sure you no longer need the infrastructure.
+
+---
+
 ## 🔍 Understanding the Components
 
 ### Security Groups

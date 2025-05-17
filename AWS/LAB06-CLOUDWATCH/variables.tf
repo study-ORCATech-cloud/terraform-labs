@@ -1,7 +1,19 @@
-variable "region" {
+variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
   default     = "eu-west-1"
+}
+
+variable "environment" {
+  description = "Environment name for tagging resources"
+  type        = string
+  default     = "dev"
+}
+
+variable "name_prefix" {
+  description = "Prefix to be used for resource names"
+  type        = string
+  default     = "lab06"
 }
 
 variable "vpc_cidr" {
@@ -56,4 +68,28 @@ variable "alarm_email" {
   description = "Email address to send alarm notifications to"
   type        = string
   default     = null
-} 
+}
+
+variable "log_retention_days" {
+  description = "Number of days to retain logs in CloudWatch"
+  type        = number
+  default     = 7
+}
+
+variable "cpu_alarm_threshold" {
+  description = "CPU utilization threshold for alarm (percentage)"
+  type        = number
+  default     = 80
+}
+
+variable "memory_alarm_threshold" {
+  description = "Memory utilization threshold for alarm (percentage)"
+  type        = number
+  default     = 80
+}
+
+variable "disk_alarm_threshold" {
+  description = "Disk utilization threshold for alarm (percentage)"
+  type        = number
+  default     = 85
+}
